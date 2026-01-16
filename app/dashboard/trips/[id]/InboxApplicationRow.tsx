@@ -111,12 +111,12 @@ export function InboxApplicationRow({ app, tripId }: InboxApplicationRowProps) {
                         {currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)}
                     </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-1">
                     {currentStatus !== 'approved' && (
                         <button
                             onClick={() => requestStatusChange('approved')}
                             disabled={isLoading}
-                            className="text-green-600 hover:text-green-900 disabled:opacity-50"
+                            className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 hover:bg-green-100 disabled:opacity-50 transition-colors"
                         >
                             Approve
                         </button>
@@ -125,7 +125,7 @@ export function InboxApplicationRow({ app, tripId }: InboxApplicationRowProps) {
                         <button
                             onClick={() => requestStatusChange('waitlist')}
                             disabled={isLoading}
-                            className="text-yellow-600 hover:text-yellow-900 disabled:opacity-50"
+                            className="inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20 hover:bg-amber-100 disabled:opacity-50 transition-colors"
                         >
                             Waitlist
                         </button>
@@ -134,7 +134,7 @@ export function InboxApplicationRow({ app, tripId }: InboxApplicationRowProps) {
                         <button
                             onClick={() => requestStatusChange('rejected')}
                             disabled={isLoading}
-                            className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                            className="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20 hover:bg-red-100 disabled:opacity-50 transition-colors"
                         >
                             Reject
                         </button>

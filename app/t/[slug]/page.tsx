@@ -24,10 +24,12 @@ export default async function PublicTripPage({ params }: { params: Promise<{ slu
         return (
             <PageContainer>
                 <div className="max-w-2xl mx-auto text-center py-20">
-                    <h1 className="text-3xl font-bold text-slate-900 mb-4">{trip.title}</h1>
-                    <div className="bg-gray-100 rounded-lg p-8 border border-gray-200">
-                        <h2 className="text-xl font-semibold text-gray-800">Trip Closed</h2>
-                        <p className="mt-2 text-gray-600">This trip is no longer accepting applications.</p>
+                    <div className="bg-white rounded-2xl p-10 shadow-sm ring-1 ring-slate-100">
+                        <h1 className="text-3xl font-bold text-slate-900 mb-2">{trip.title}</h1>
+                        <div className="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-sm font-medium mb-6">
+                            Trip Closed
+                        </div>
+                        <p className="text-slate-500">This trip is no longer accepting applications.</p>
                     </div>
                 </div>
             </PageContainer>
@@ -43,77 +45,83 @@ export default async function PublicTripPage({ params }: { params: Promise<{ slu
 
     return (
         <PageContainer>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
 
                 {/* Left Column: Trip Details */}
                 <div className="lg:col-span-2 space-y-8">
 
                     {/* Header */}
                     <div>
-                        <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">{trip.title}</h1>
-                        <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-600">
-                            <div className="flex items-center">
-                                <MapPin className="mr-1.5 h-5 w-5 text-indigo-500" />
+                        <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight sm:text-5xl mb-6">{trip.title}</h1>
+                        <div className="flex flex-wrap gap-4 text-sm font-medium text-slate-600">
+                            <div className="flex items-center bg-white px-3 py-1.5 rounded-full shadow-sm ring-1 ring-slate-200">
+                                <MapPin className="mr-2 h-4 w-4 text-indigo-500" />
                                 {trip.from_city} &rarr; {trip.to_place}
                             </div>
-                            <div className="flex items-center">
-                                <Calendar className="mr-1.5 h-5 w-5 text-indigo-500" />
+                            <div className="flex items-center bg-white px-3 py-1.5 rounded-full shadow-sm ring-1 ring-slate-200">
+                                <Calendar className="mr-2 h-4 w-4 text-indigo-500" />
                                 {trip.start_date} {trip.end_date ? `- ${trip.end_date}` : ''}
                             </div>
                         </div>
                     </div>
 
-                    {/* Cover Image (Placeholder if needed, or if we had one) */}
+                    {/* Cover Image */}
                     {trip.cover_image_url && (
-                        <div className="aspect-video w-full rounded-lg bg-slate-100 overflow-hidden relative">
-                            {/* Next/Image would be better, but standard img for MVP if external url */}
+                        <div className="aspect-video w-full rounded-2xl bg-slate-100 overflow-hidden relative shadow-sm">
                             <img src={trip.cover_image_url} alt={trip.title} className="object-cover w-full h-full" />
                         </div>
                     )}
 
-                    {/* Description */}
-                    <div className="prose prose-slate max-w-none">
-                        <h3 className="text-lg font-semibold text-slate-900">About this trip</h3>
-                        <p className="whitespace-pre-wrap text-slate-700 leading-relaxed mt-2">
-                            {trip.description_clean}
-                        </p>
+                    {/* Description Card */}
+                    <div className="bg-white rounded-2xl p-8 shadow-sm ring-1 ring-slate-100">
+                        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            About this trip
+                        </h3>
+                        <div className="prose prose-slate max-w-none prose-p:leading-relaxed text-slate-600">
+                            <p className="whitespace-pre-wrap">{trip.description_clean}</p>
+                        </div>
                     </div>
 
                 </div>
 
                 {/* Right Column: Key Info & Action */}
-                <div className="space-y-8">
+                <div className="space-y-6">
 
                     {/* At a Glance Box */}
-                    <div className="bg-slate-50 rounded-lg p-6 ring-1 ring-slate-200 space-y-4">
-                        <h3 className="font-semibold text-slate-900 border-b border-slate-200 pb-2">Trip Details</h3>
+                    <div className="bg-white rounded-2xl p-6 shadow-sm ring-1 ring-slate-100 space-y-5">
+                        <h3 className="font-bold text-slate-900 text-lg">Trip Details</h3>
 
-                        <div className="flex justify-between items-center py-1">
-                            <div className="flex items-center text-slate-600">
-                                <Banknote className="mr-2 h-5 w-5 text-slate-400" />
-                                <span>Price</span>
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center p-3 bg-slate-50 rounded-xl">
+                                <div className="flex items-center text-slate-600 text-sm font-medium">
+                                    <Banknote className="mr-3 h-5 w-5 text-slate-400" />
+                                    <span>Price</span>
+                                </div>
+                                <span className="font-bold text-slate-900">
+                                    {trip.price_amount ? `${trip.price_amount} ${trip.price_currency}` : 'Free/TBD'}
+                                </span>
                             </div>
-                            <span className="font-medium text-slate-900">
-                                {trip.price_amount ? `${trip.price_amount} ${trip.price_currency}` : 'Free/TBD'}
-                            </span>
-                        </div>
 
-                        <div className="flex justify-between items-center py-1">
-                            <div className="flex items-center text-slate-600">
-                                <Users className="mr-2 h-5 w-5 text-slate-400" />
-                                <span>Spots</span>
+                            <div className="flex justify-between items-center p-3 bg-slate-50 rounded-xl">
+                                <div className="flex items-center text-slate-600 text-sm font-medium">
+                                    <Users className="mr-3 h-5 w-5 text-slate-400" />
+                                    <span>Availability</span>
+                                </div>
+                                <span className={`font-bold ${isFull ? 'text-red-600' : 'text-emerald-600'}`}>
+                                    {trip.seats_left !== null ? `${trip.seats_left} seats left` : 'Open'}
+                                </span>
                             </div>
-                            <span className={`font-medium ${isFull ? 'text-red-600' : 'text-slate-900'}`}>
-                                {trip.seats_left !== null ? `${trip.seats_left} remaining` : 'Open'}
-                            </span>
                         </div>
                     </div>
 
                     {/* Application Form */}
                     {isFull ? (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-                            <h3 className="text-lg font-medium text-red-900">Fully Booked</h3>
-                            <p className="mt-2 text-sm text-red-700">
+                        <div className="bg-white border border-red-100 rounded-2xl p-8 text-center shadow-sm">
+                            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 mb-4">
+                                <Users className="h-6 w-6 text-red-600" />
+                            </div>
+                            <h3 className="text-lg font-bold text-slate-900">Simply Fully Booked!</h3>
+                            <p className="mt-2 text-sm text-slate-500">
                                 Sorry, there are no more seats available for this trip.
                             </p>
                         </div>

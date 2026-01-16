@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from 'react'
 import { submitApplication, ApplicationState } from '@/app/t/[slug]/actions'
+import { CheckCircle2, MessageCircle, Instagram, Phone } from 'lucide-react'
 
 const initialState: ApplicationState = { message: null, errors: {} }
 
@@ -18,9 +19,12 @@ export function ApplicationForm({ tripId }: { tripId: string }) {
 
     if (isSuccess) {
         return (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-                <h3 className="text-lg font-medium text-green-900">Application Sent!</h3>
-                <p className="mt-2 text-sm text-green-700">
+            <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-8 text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 mb-4">
+                    <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                </div>
+                <h3 className="text-lg font-bold text-emerald-900">Application Sent!</h3>
+                <p className="mt-2 text-sm text-emerald-700">
                     The organizer has received your request. They will contact you shortly.
                 </p>
             </div>
@@ -28,88 +32,89 @@ export function ApplicationForm({ tripId }: { tripId: string }) {
     }
 
     return (
-        <div className="bg-white shadow rounded-lg p-6 border border-slate-200">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4">Join this Trip</h3>
-            <form action={formAction} className="space-y-4">
+        <div className="bg-white shadow-sm ring-1 ring-slate-100 rounded-2xl p-6 md:p-8">
+            <h3 className="text-xl font-bold text-slate-900 mb-6">Join this Trip</h3>
+            <form action={formAction} className="space-y-5">
                 <input type="hidden" name="trip_id" value={tripId} />
 
                 <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-slate-700">Full Name</label>
+                    <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
                     <input
                         type="text"
                         name="name"
                         id="name"
                         required
-                        className="mt-1 block w-full rounded-md border-0 py-2 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-                        placeholder="John Doe"
+                        className="block w-full rounded-lg border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-slate-50 focus:bg-white transition-all"
+                        placeholder="e.g. Alice Smith"
                     />
                     {state.errors?.name && <p className="text-red-600 text-xs mt-1">{state.errors.name}</p>}
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-700">Preferred Contact</label>
-                    <div className="mt-2 flex space-x-4">
-                        <label className="flex items-center">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Preferred Contact</label>
+                    <div className="grid grid-cols-3 gap-3">
+                        <label className={`flex flex-col items-center justify-center p-3 rounded-lg border cursor-pointer transition-all ${contactType === 'telegram' ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 hover:bg-slate-50'}`}>
                             <input
                                 type="radio"
                                 name="contact_type"
                                 value="telegram"
                                 checked={contactType === 'telegram'}
                                 onChange={() => setContactType('telegram')}
-                                className="h-4 w-4 text-indigo-600 border-slate-300 focus:ring-indigo-600"
+                                className="sr-only"
                             />
-                            <span className="ml-2 text-sm text-slate-900">Telegram</span>
+                            <MessageCircle className={`w-5 h-5 mb-1 ${contactType === 'telegram' ? 'text-indigo-600' : 'text-slate-400'}`} />
+                            <span className="text-xs font-medium">Telegram</span>
                         </label>
-                        <label className="flex items-center">
+                        <label className={`flex flex-col items-center justify-center p-3 rounded-lg border cursor-pointer transition-all ${contactType === 'instagram' ? 'border-pink-600 bg-pink-50 text-pink-700' : 'border-slate-200 hover:bg-slate-50'}`}>
                             <input
                                 type="radio"
                                 name="contact_type"
                                 value="instagram"
                                 checked={contactType === 'instagram'}
                                 onChange={() => setContactType('instagram')}
-                                className="h-4 w-4 text-indigo-600 border-slate-300 focus:ring-indigo-600"
+                                className="sr-only"
                             />
-                            <span className="ml-2 text-sm text-slate-900">Instagram</span>
+                            <Instagram className={`w-5 h-5 mb-1 ${contactType === 'instagram' ? 'text-pink-600' : 'text-slate-400'}`} />
+                            <span className="text-xs font-medium">Instagram</span>
                         </label>
-                        <label className="flex items-center">
+                        <label className={`flex flex-col items-center justify-center p-3 rounded-lg border cursor-pointer transition-all ${contactType === 'phone' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-slate-200 hover:bg-slate-50'}`}>
                             <input
                                 type="radio"
                                 name="contact_type"
                                 value="phone"
                                 checked={contactType === 'phone'}
                                 onChange={() => setContactType('phone')}
-                                className="h-4 w-4 text-indigo-600 border-slate-300 focus:ring-indigo-600"
+                                className="sr-only"
                             />
-                            <span className="ml-2 text-sm text-slate-900">Phone</span>
+                            <Phone className={`w-5 h-5 mb-1 ${contactType === 'phone' ? 'text-blue-600' : 'text-slate-400'}`} />
+                            <span className="text-xs font-medium">Phone</span>
                         </label>
                     </div>
                 </div>
 
                 <div>
-                    <label htmlFor="contact_value" className="block text-sm font-medium text-slate-700 mt-2">
+                    <label htmlFor="contact_value" className="block text-sm font-medium text-slate-700 mb-1.5">
                         {contactType === 'telegram' && 'Telegram Username'}
                         {contactType === 'instagram' && 'Instagram Handle'}
                         {contactType === 'phone' && 'Phone Number'}
                     </label>
-                    <div className="mt-1">
-                        <input
-                            type="text"
-                            name="contact_value"
-                            id="contact_value"
-                            required
-                            className="block w-full rounded-md border-0 py-2 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-                            placeholder={
-                                contactType === 'telegram' ? '@username' :
-                                    contactType === 'instagram' ? '@handle' :
-                                        '+48 123 456 789'
-                            }
-                        />
-                    </div>
+                    <input
+                        type="text"
+                        name="contact_value"
+                        id="contact_value"
+                        required
+                        className="block w-full rounded-lg border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-slate-50 focus:bg-white transition-all"
+                        placeholder={
+                            contactType === 'telegram' ? '@username' :
+                                contactType === 'instagram' ? '@handle' :
+                                    '+48 123 456 789'
+                        }
+                    />
                     {state.errors?.contact && <p className="text-red-600 text-xs mt-1">{state.errors.contact}</p>}
                 </div>
 
                 <div>
-                    <label htmlFor="seats_requested" className="block text-sm font-medium text-slate-700">Seats</label>
+                    <label htmlFor="seats_requested" className="block text-sm font-medium text-slate-700 mb-1.5">Seats Needed</label>
                     <input
                         type="number"
                         name="seats_requested"
@@ -117,24 +122,24 @@ export function ApplicationForm({ tripId }: { tripId: string }) {
                         min="1"
                         defaultValue="1"
                         required
-                        className="mt-1 block w-full rounded-md border-0 py-2 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
+                        className="block w-full rounded-lg border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-slate-50 focus:bg-white transition-all"
                     />
                     {state.errors?.seats_requested && <p className="text-red-600 text-xs mt-1">{state.errors.seats_requested}</p>}
                 </div>
 
                 <div>
-                    <label htmlFor="note" className="block text-sm font-medium text-slate-700">Note (Optional)</label>
+                    <label htmlFor="note" className="block text-sm font-medium text-slate-700 mb-1.5">Note (Optional)</label>
                     <textarea
                         name="note"
                         id="note"
                         rows={3}
-                        className="mt-1 block w-full rounded-md border-0 py-2 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
+                        className="block w-full rounded-lg border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-slate-50 focus:bg-white transition-all"
                         placeholder="Any questions or special requests?"
                     />
                 </div>
 
                 {state.message && !isSuccess && (
-                    <div className="p-3 bg-red-50 text-red-700 rounded text-sm">
+                    <div className="p-4 rounded-lg bg-red-50 text-red-700 text-sm border border-red-100">
                         {state.message}
                     </div>
                 )}
@@ -142,7 +147,7 @@ export function ApplicationForm({ tripId }: { tripId: string }) {
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
+                    className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-200 hover:bg-indigo-500 hover:shadow-indigo-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 transition-all"
                 >
                     {isPending ? 'Sending...' : 'Send Application'}
                 </button>

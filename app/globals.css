@@ -2,7 +2,8 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground-rgb: 15, 23, 42;
+  /* slate-900 */
 }
 
 @theme inline {
@@ -15,7 +16,14 @@
 
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: rgb(var(--foreground-rgb));
+  background-color: #f8fafc;
+  /* Это slate-50, очень мягкий серый */
+  min-height: 100vh;
+}
+
+@layer base {
+  button {
+    @apply transition-all duration-200;
+  }
 }

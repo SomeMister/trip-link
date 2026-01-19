@@ -1,154 +1,110 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
-import { PageContainer } from '@/components/ui/PageContainer'
+import { ApplicationForm } from '@/components/ApplicationForm'
 import { Carousel } from '@/components/ui/Carousel'
-import { MapPin } from "lucide-react"
-import { Calendar } from "lucide-react"
-import { Banknote } from "lucide-react"
-import { Users } from "lucide-react"
-import { ApplicationForm } from "@/components/ApplicationForm"
+import { CalendarDays, MapPin, Coins } from "lucide-react"
+import { MobileStickyCTA } from "@/components/MobileStickyCTA"
 
+export const dynamic = 'force-dynamic'
 
 export default async function PublicTripPage({ params }: { params: Promise<{ slug: string }> }) {
-    const { slug } = await params
-    const supabase = createClient()
+    const resolvedParams = await params
+    const supabase = await createClient()
 
-    const { data: trip, error } = await (await supabase)
+    const { data: trip, error } = await supabase
         .from('trips')
         .select(`
             *,
             trip_images (
+                id,
                 storage_path,
                 position
             )
         `)
-        .ilike('slug', slug)
-        // .eq('status', 'published') // removed to allow handling closed state
+        .ilike('slug', resolvedParams.slug) // Возвращаем ilike для надежности
+        .eq('status', 'published')
         .single()
-
-    // Sort images by position (Supabase default ordering sometimes varies if not specified)
-    // We can also use .order() on the joint but simple array sort here works nicely
-    const orderedImages = trip?.trip_images?.sort((a: any, b: any) => a.position - b.position) || []
 
     if (error || !trip) {
         notFound()
     }
 
-    // Handle Closed State
-    if (trip.status === 'closed') {
-        return (
-            <PageContainer>
-                <div className="max-w-2xl mx-auto text-center py-20">
-                    <div className="bg-white rounded-2xl p-10 shadow-sm ring-1 ring-slate-100">
-                        <h1 className="text-3xl font-bold text-slate-900 mb-2">{trip.title}</h1>
-                        <div className="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-sm font-medium mb-6">
-                            Trip Closed
-                        </div>
-                        <p className="text-slate-500">This trip is no longer accepting applications.</p>
-                    </div>
-                </div>
-            </PageContainer>
-        )
-    }
-
-    // Handle Draft State (should not be public)
-    if (trip.status === 'draft') {
-        notFound()
-    }
-
+    // Сортировка изображений
+    const orderedImages = trip.trip_images?.sort((a: any, b: any) => a.position - b.position) || []
     const isFull = trip.seats_left !== null && trip.seats_left <= 0
 
     return (
-        <PageContainer>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
-
-                {/* Left Column: Trip Details */}
-                <div className="lg:col-span-2 space-y-8">
-
-                    {/* Header */}
-                    <div>
-                        <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight sm:text-5xl mb-6">{trip.title}</h1>
-                        <div className="flex flex-wrap gap-4 text-sm font-medium text-slate-600">
-                            <div className="flex items-center bg-white px-3 py-1.5 rounded-full shadow-sm ring-1 ring-slate-200">
-                                <MapPin className="mr-2 h-4 w-4 text-indigo-500" />
-                                {trip.from_city} &rarr; {trip.to_place}
-                            </div>
-                            <div className="flex items-center bg-white px-3 py-1.5 rounded-full shadow-sm ring-1 ring-slate-200">
-                                <Calendar className="mr-2 h-4 w-4 text-indigo-500" />
-                                {trip.start_date} {trip.end_date ? `- ${trip.end_date}` : ''}
-                            </div>
-                        </div>
+        <div className="min-h-screen bg-gray-50 pb-20 lg:pb-0">
+            {/* Контейнер для карусели */}
+            <div className="max-w-5xl mx-auto lg:pt-8 lg:px-8">
+                {orderedImages.length > 0 ? (
+                    <Carousel images={orderedImages} className="lg:rounded-3xl" />
+                ) : trip.cover_image_url ? (
+                    <div className="h-72 md:h-[400px] w-full lg:rounded-3xl overflow-hidden shadow-sm">
+                        <img src={trip.cover_image_url} alt={trip.title} className="object-cover w-full h-full" />
                     </div>
-
-                    {/* Cover Image or Carousel */}
-                    {orderedImages.length > 0 ? (
-                        <Carousel images={orderedImages} />
-                    ) : trip.cover_image_url ? (
-                        <div className="aspect-video w-full rounded-2xl bg-slate-100 overflow-hidden relative shadow-sm">
-                            <img src={trip.cover_image_url} alt={trip.title} className="object-cover w-full h-full" />
-                        </div>
-                    ) : null}
-
-                    {/* Description Card */}
-                    <div className="bg-white rounded-2xl p-8 shadow-sm ring-1 ring-slate-100">
-                        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                            About this trip
-                        </h3>
-                        <div className="prose prose-slate max-w-none prose-p:leading-relaxed text-slate-600">
-                            <p className="whitespace-pre-wrap">{trip.description_clean}</p>
-                        </div>
-                    </div>
-
-                </div>
-
-                {/* Right Column: Key Info & Action */}
-                <div className="space-y-6">
-
-                    {/* At a Glance Box */}
-                    <div className="bg-white rounded-2xl p-6 shadow-sm ring-1 ring-slate-100 space-y-5">
-                        <h3 className="font-bold text-slate-900 text-lg">Trip Details</h3>
-
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center p-3 bg-slate-50 rounded-xl">
-                                <div className="flex items-center text-slate-600 text-sm font-medium">
-                                    <Banknote className="mr-3 h-5 w-5 text-slate-400" />
-                                    <span>Price</span>
-                                </div>
-                                <span className="font-bold text-slate-900">
-                                    {trip.price_amount ? `${trip.price_amount} ${trip.price_currency}` : 'Free/TBD'}
-                                </span>
-                            </div>
-
-                            <div className="flex justify-between items-center p-3 bg-slate-50 rounded-xl">
-                                <div className="flex items-center text-slate-600 text-sm font-medium">
-                                    <Users className="mr-3 h-5 w-5 text-slate-400" />
-                                    <span>Availability</span>
-                                </div>
-                                <span className={`font-bold ${isFull ? 'text-red-600' : 'text-emerald-600'}`}>
-                                    {trip.seats_left !== null ? `${trip.seats_left} seats left` : 'Open'}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Application Form */}
-                    {isFull ? (
-                        <div className="bg-white border border-red-100 rounded-2xl p-8 text-center shadow-sm">
-                            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 mb-4">
-                                <Users className="h-6 w-6 text-red-600" />
-                            </div>
-                            <h3 className="text-lg font-bold text-slate-900">Simply Fully Booked!</h3>
-                            <p className="mt-2 text-sm text-slate-500">
-                                Sorry, there are no more seats available for this trip.
-                            </p>
-                        </div>
-                    ) : (
-                        <ApplicationForm tripId={trip.id} />
-                    )}
-
-                </div>
-
+                ) : null}
             </div>
-        </PageContainer>
+
+            <main className="max-w-5xl mx-auto px-4 py-8 lg:px-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+
+                    <div className="lg:col-span-2 space-y-8">
+                        <div>
+                            <h1 className="text-3xl md:text-5xl font-black text-slate-900 leading-tight mb-6">
+                                {trip.title}
+                            </h1>
+
+                            <div className="flex flex-wrap gap-3">
+                                {trip.start_date && (
+                                    <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-100 text-sm font-semibold text-slate-700">
+                                        <CalendarDays className="h-4 w-4 text-teal-600" />
+                                        {trip.start_date} {trip.end_date ? `— ${trip.end_date}` : ''}
+                                    </div>
+                                )}
+                                {trip.to_place && (
+                                    <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-100 text-sm font-semibold text-slate-700">
+                                        <MapPin className="h-4 w-4 text-teal-600" />
+                                        {trip.to_place}
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-100 text-sm font-semibold text-slate-700">
+                                    <Coins className="h-4 w-4 text-teal-600" />
+                                    {trip.price_amount ? `${trip.price_amount} ${trip.price_currency}` : 'Цена не указана'}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
+                            <h3 className="text-xl font-bold text-slate-900 mb-4">О поездке</h3>
+                            <div className="prose prose-slate max-w-none">
+                                <p className="text-slate-600 leading-relaxed whitespace-pre-wrap">
+                                    {trip.description_clean || trip.description_raw}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="application-section" className="space-y-6 scroll-mt-6">
+                        <div className="bg-white rounded-3xl p-8 shadow-xl border border-slate-100">
+                            <h3 className="text-2xl font-bold text-slate-900 mb-2">Участвовать</h3>
+                            <p className={`mb-6 font-bold ${isFull ? 'text-rose-600' : 'text-emerald-600'}`}>
+                                {isFull ? 'Все места заняты' : trip.seats_left !== null ? `Осталось ${trip.seats_left} мест` : 'Запись открыта'}
+                            </p>
+
+                            {isFull ? (
+                                <div className="text-center py-4 px-4 bg-rose-50 rounded-2xl text-rose-700 font-medium">
+                                    К сожалению, мест больше нет. Но вы можете записаться в лист ожидания.
+                                </div>
+                            ) : (
+                                <ApplicationForm tripId={trip.id} />
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <MobileStickyCTA seatsLeft={trip.seats_left} isFull={isFull} />
+        </div>
     )
 }

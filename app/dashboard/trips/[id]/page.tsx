@@ -3,6 +3,7 @@ import { PageContainer } from '@/components/ui/PageContainer'
 import { notFound } from 'next/navigation'
 import { InboxApplicationRow } from './InboxApplicationRow'
 import { CloseTripButton } from './CloseTripButton'
+import { Carousel } from '@/components/ui/Carousel'
 import { Users, UserCheck, Clock, Armchair, MapPin, Calendar, Banknote } from 'lucide-react'
 
 export default async function TripDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -12,7 +13,13 @@ export default async function TripDetailsPage({ params }: { params: Promise<{ id
     // Fetch Trip
     const { data: trip, error } = await supabase
         .from('trips')
-        .select('*')
+        .select(`
+            *,
+            trip_images (
+                storage_path,
+                position
+            )
+        `)
         .eq('id', id)
         .single()
 
@@ -33,6 +40,9 @@ export default async function TripDetailsPage({ params }: { params: Promise<{ id
     const waitlistApps = applications?.filter(a => a.status === 'waitlist').length || 0
     const pendingApps = applications?.filter(a => a.status === 'new').length || 0
     const occupancy = trip.seats_total ? Math.round(((trip.seats_total - trip.seats_left) / trip.seats_total) * 100) : 0
+
+    // Sort images
+    const orderedImages = trip.trip_images?.sort((a: any, b: any) => a.position - b.position) || []
 
     return (
         <PageContainer>
@@ -63,74 +73,92 @@ export default async function TripDetailsPage({ params }: { params: Promise<{ id
                 </div>
             </div>
 
-            {/* Trip Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                <StatCard
-                    label="Seats Left"
-                    value={`${trip.seats_left}/${trip.seats_total}`}
-                    subtext={`${occupancy}% Full`}
-                    icon={<Armchair className="w-5 h-5 text-indigo-600" />}
-                    bg="bg-indigo-50"
-                />
-                <StatCard
-                    label="Pending Review"
-                    value={pendingApps}
-                    icon={<Clock className="w-5 h-5 text-amber-600" />}
-                    bg="bg-amber-50"
-                />
-                <StatCard
-                    label="Approved"
-                    value={approvedApps}
-                    icon={<UserCheck className="w-5 h-5 text-emerald-600" />}
-                    bg="bg-emerald-50"
-                />
-                <StatCard
-                    label="Total Apps"
-                    value={totalApps}
-                    icon={<Users className="w-5 h-5 text-blue-600" />}
-                    bg="bg-blue-50"
-                />
-            </div>
+            {/* Top Layout: Carousel + KPIs */}
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Left Column: Carousel + Inbox */}
+                <div className="space-y-8 min-w-0">
 
-                {/* Left: Inbox */}
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-lg font-semibold text-slate-900">Applications</h2>
-                    </div>
-
-                    {/* Inbox List */}
-                    <div className="bg-white shadow-sm ring-1 ring-slate-100 rounded-xl overflow-hidden overflow-x-auto">
-                        {!applications || applications.length === 0 ? (
-                            <div className="p-16 text-center">
-                                <Users className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-                                <p className="text-slate-500">No applications received yet.</p>
-                            </div>
+                    {/* Carousel */}
+                    <div className="w-full">
+                        {orderedImages.length > 0 ? (
+                            <Carousel images={orderedImages} className="w-full aspect-video rounded-xl overflow-hidden shadow-sm" />
                         ) : (
-                            <table className="min-w-full divide-y divide-slate-100">
-                                <thead>
-                                    <tr className="bg-slate-50/50">
-                                        <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Candidate</th>
-                                        <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Seats</th>
-                                        <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Contact</th>
-                                        <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
-                                        <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                                        <th scope="col" className="relative px-6 py-4"><span className="sr-only">Actions</span></th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-slate-50">
-                                    {applications.map((app) => (
-                                        <InboxApplicationRow key={app.id} app={app} tripId={trip.id} />
-                                    ))}
-                                </tbody>
-                            </table>
+                            <div className="w-full aspect-video bg-slate-50 rounded-xl flex items-center justify-center border border-slate-100">
+                                <span className="text-slate-400 text-sm">No photos added</span>
+                            </div>
                         )}
                     </div>
+
+                    {/* Applications Inbox */}
+                    <div>
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-lg font-semibold text-slate-900">Applications</h2>
+                        </div>
+                        <div className="bg-white shadow-sm ring-1 ring-slate-100 rounded-xl overflow-hidden overflow-x-auto">
+                            {!applications || applications.length === 0 ? (
+                                <div className="p-16 text-center">
+                                    <Users className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+                                    <p className="text-slate-500">No applications received yet.</p>
+                                </div>
+                            ) : (
+                                <table className="min-w-full divide-y divide-slate-100">
+                                    <thead>
+                                        <tr className="bg-slate-50/50">
+                                            <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Candidate</th>
+                                            <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Seats</th>
+                                            <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Contact</th>
+                                            <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
+                                            <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                                            <th scope="col" className="relative px-6 py-4"><span className="sr-only">Actions</span></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-slate-50">
+                                        {applications.map((app) => (
+                                            <InboxApplicationRow key={app.id} app={app} tripId={trip.id} />
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+                    </div>
+
                 </div>
 
-                {/* Right: Details Sidebar */}
-                <div className="space-y-6">
+                {/* Right Column: KPIs + Summary */}
+                <div className="flex flex-col gap-6">
+
+                    {/* KPIs */}
+                    <div className="flex flex-col gap-4">
+                        <StatCard
+                            label="Pending Review"
+                            value={pendingApps}
+                            icon={<Clock className="w-5 h-5 text-amber-600" />}
+                            bg="bg-amber-50"
+                        />
+                        <StatCard
+                            label="Approved"
+                            value={approvedApps}
+                            icon={<UserCheck className="w-5 h-5 text-emerald-600" />}
+                            bg="bg-emerald-50"
+                        />
+                        <StatCard
+                            label="Seats Left"
+                            value={`${trip.seats_left}/${trip.seats_total}`}
+                            subtext={`${occupancy}% Full`}
+                            icon={<Armchair className="w-5 h-5 text-indigo-600" />}
+                            bg="bg-indigo-50"
+                        />
+                        <StatCard
+                            label="Total Apps"
+                            value={totalApps}
+                            icon={<Users className="w-5 h-5 text-blue-600" />}
+                            bg="bg-blue-50"
+                        />
+                    </div>
+
+                    {/* Trip Summary Card */}
                     <div className="bg-white p-6 rounded-xl shadow-sm ring-1 ring-slate-100">
                         <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-6 pb-4 border-b border-slate-50">Trip Summary</h3>
 
@@ -173,10 +201,11 @@ export default async function TripDetailsPage({ params }: { params: Promise<{ id
                             </div>
                         </dl>
                     </div>
+
                 </div>
 
             </div>
-        </PageContainer>
+        </PageContainer >
     )
 }
 

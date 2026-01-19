@@ -47,7 +47,7 @@ export async function createTrip(prevState: CreateTripState, formData: FormData)
     let unique = false
     let attempts = 0
     while (!unique && attempts < 3) {
-        const { data } = await supabase.from('trips').select('id').eq('slug', slug).single()
+        const { data } = await supabase.from('trips').select('id').ilike('slug', slug).single()
         if (!data) {
             unique = true
         } else {
@@ -60,7 +60,7 @@ export async function createTrip(prevState: CreateTripState, formData: FormData)
         return { message: 'Failed to generate unique link. Please try again.' }
     }
 
-    // 5. Insert
+    // 5. Insert Trip
     const { data, error } = await supabase.from('trips').insert({
         owner_id: user.id,
         slug,
@@ -76,13 +76,62 @@ export async function createTrip(prevState: CreateTripState, formData: FormData)
         seats_total: seats_total ? Number(seats_total) : null,
         seats_left: seats_total ? Number(seats_total) : null,
         status: status || 'draft',
-        cover_image_url: null, // MVP: No images yet
+        cover_image_url: null, // We will calculate this from images if needed, or leave null for now
     }).select('id').single()
 
     if (error) {
         return { message: error.message }
     }
 
-    // 6. Redirect
-    redirect(`/dashboard/trips/${data.id}`)
+    const tripId = data.id
+
+    // 6. Handle Photos
+    const photos = formData.getAll('photos') as File[]
+    if (photos && photos.length > 0) {
+        const uploads = []
+        let position = 0
+
+        for (const file of photos) {
+            // Skip if not a file or empty (sometimes empty inputs send neutral data)
+            if (!(file instanceof File) || file.size === 0) continue
+
+            const fileExt = file.name.split('.').pop()
+            const fileName = `${tripId}/${crypto.randomUUID()}.${fileExt}`
+
+            // Upload to Supabase Storage
+            const uploadPromise = supabase.storage
+                .from('trip-photos')
+                .upload(fileName, file)
+                .then(async ({ data: uploadData, error: uploadError }) => {
+                    if (uploadError) {
+                        console.error('Upload error:', uploadError)
+                        return null
+                    }
+                    // Insert into DB
+                    return supabase.from('trip_images').insert({
+                        trip_id: tripId,
+                        storage_path: fileName,
+                        position: position++
+                    })
+                })
+
+            uploads.push(uploadPromise)
+        }
+
+        await Promise.all(uploads)
+
+        // Update cover image URL if we successfully uploaded images (MVP: take the first one)
+        // We can skip this if we handle cover in the carousel logic mostly
+        // But let's try to set it for the card view in dashboard
+        // We won't do a full secondary update just yet to keep it fast, or we can?
+        // Let's rely on the trip_images table for the public page mostly.
+        // If the Main Dashboard needs a cover, we might query trip_images there too or update here.
+        // For simplicity: Update cover_image_url with the first successful upload path public URL?
+        // Actually, let's keep it simple. The schema has cover_image_url. 
+        // We can do a quick update if we have at least one photo.
+        // (Skipping for now to avoid complexity, Carousel works on trip_images)
+    }
+
+    // 7. Redirect
+    redirect(`/dashboard/trips/${tripId}`)
 }

@@ -5,6 +5,7 @@ import { createTrip, CreateTripState } from '../actions'
 import { extractTripDetails } from '@/lib/extractFromText'
 import { ParsedTripFields } from '@/lib/types'
 import { PageContainer } from '@/components/ui/PageContainer'
+import { ImageUpload } from '@/components/ui/ImageUpload'
 
 const initialState: CreateTripState = { message: null, errors: {} }
 
@@ -252,6 +253,10 @@ export default function NewTripPage() {
                                 onChange={handleChange}
                                 className="block w-full rounded-lg border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-slate-50 focus:bg-white transition-all"
                             />
+                        </div>
+
+                        <div className="sm:col-span-6">
+                            <ImageUpload name="photos" maxFiles={5} />
                         </div>
 
                         <div className="sm:col-span-6">

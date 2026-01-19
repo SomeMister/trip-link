@@ -1,8 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { PageContainer } from '@/components/ui/PageContainer'
-import { ApplicationForm } from '@/components/ApplicationForm'
-import { Calendar, MapPin, Users, Banknote } from 'lucide-react'
+import { Carousel } from '@/components/ui/Carousel'
+import { MapPin } from "lucide-react"
+import { Calendar } from "lucide-react"
+import { Banknote } from "lucide-react"
+import { Users } from "lucide-react"
+import { ApplicationForm } from "@/components/ApplicationForm"
+
 
 export default async function PublicTripPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params
@@ -10,10 +15,20 @@ export default async function PublicTripPage({ params }: { params: Promise<{ slu
 
     const { data: trip, error } = await (await supabase)
         .from('trips')
-        .select('*')
-        .eq('slug', slug)
+        .select(`
+            *,
+            trip_images (
+                storage_path,
+                position
+            )
+        `)
+        .ilike('slug', slug)
         // .eq('status', 'published') // removed to allow handling closed state
         .single()
+
+    // Sort images by position (Supabase default ordering sometimes varies if not specified)
+    // We can also use .order() on the joint but simple array sort here works nicely
+    const orderedImages = trip?.trip_images?.sort((a: any, b: any) => a.position - b.position) || []
 
     if (error || !trip) {
         notFound()
@@ -65,12 +80,14 @@ export default async function PublicTripPage({ params }: { params: Promise<{ slu
                         </div>
                     </div>
 
-                    {/* Cover Image */}
-                    {trip.cover_image_url && (
+                    {/* Cover Image or Carousel */}
+                    {orderedImages.length > 0 ? (
+                        <Carousel images={orderedImages} />
+                    ) : trip.cover_image_url ? (
                         <div className="aspect-video w-full rounded-2xl bg-slate-100 overflow-hidden relative shadow-sm">
                             <img src={trip.cover_image_url} alt={trip.title} className="object-cover w-full h-full" />
                         </div>
-                    )}
+                    ) : null}
 
                     {/* Description Card */}
                     <div className="bg-white rounded-2xl p-8 shadow-sm ring-1 ring-slate-100">

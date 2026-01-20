@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { PageContainer } from '@/components/ui/PageContainer'
 import { notFound } from 'next/navigation'
-import { InboxApplicationRow } from './InboxApplicationRow'
+import { ApplicationCard } from '@/components/ApplicationCard'
 import { CloseTripButton } from './CloseTripButton'
 import { Carousel } from '@/components/ui/Carousel'
 import { Users, UserCheck, Clock, Armchair, MapPin, Calendar, Banknote } from 'lucide-react'
@@ -63,7 +63,7 @@ export default async function TripDetailsPage({ params }: { params: Promise<{ id
                     <a
                         href={`/t/${trip.slug}`}
                         target="_blank"
-                        className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-slate-50 transition-colors"
+                        className="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-slate-50 transition-colors"
                     >
                         View Public Page
                     </a>
@@ -73,135 +73,98 @@ export default async function TripDetailsPage({ params }: { params: Promise<{ id
                 </div>
             </div>
 
-            {/* Top Layout: Carousel + KPIs */}
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
+            {/* Main Content Grid: 2 Columns */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
 
-                {/* Left Column: Carousel + Inbox */}
-                <div className="space-y-8 min-w-0">
+                {/* Left Column (2/3): Inbox Grid */}
+                <div className="lg:col-span-2 space-y-6">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-xl font-bold text-slate-900">Inbox Заявок</h2>
+                        <span className="text-sm font-medium text-slate-500">{applications?.length || 0} всего</span>
+                    </div>
 
-                    {/* Carousel */}
-                    <div className="w-full">
-                        {orderedImages.length > 0 ? (
-                            <Carousel images={orderedImages} className="w-full aspect-video rounded-xl overflow-hidden shadow-sm" />
-                        ) : (
-                            <div className="w-full aspect-video bg-slate-50 rounded-xl flex items-center justify-center border border-slate-100">
-                                <span className="text-slate-400 text-sm">No photos added</span>
+                    {!applications || applications.length === 0 ? (
+                        <div className="bg-white rounded-3xl p-12 text-center border border-slate-100 border-dashed">
+                            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Users className="w-8 h-8 text-slate-300" />
                             </div>
-                        )}
-                    </div>
-
-                    {/* Applications Inbox */}
-                    <div>
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-lg font-semibold text-slate-900">Applications</h2>
+                            <h3 className="text-lg font-bold text-slate-900">Заявок пока нет</h3>
+                            <p className="text-slate-500">Поделитесь ссылкой на поездку, чтобы получить первые отклики.</p>
                         </div>
-                        <div className="bg-white shadow-sm ring-1 ring-slate-100 rounded-xl overflow-hidden overflow-x-auto">
-                            {!applications || applications.length === 0 ? (
-                                <div className="p-16 text-center">
-                                    <Users className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-                                    <p className="text-slate-500">No applications received yet.</p>
-                                </div>
-                            ) : (
-                                <table className="min-w-full divide-y divide-slate-100">
-                                    <thead>
-                                        <tr className="bg-slate-50/50">
-                                            <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Candidate</th>
-                                            <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Seats</th>
-                                            <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Contact</th>
-                                            <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
-                                            <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                                            <th scope="col" className="relative px-6 py-4"><span className="sr-only">Actions</span></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-slate-50">
-                                        {applications.map((app) => (
-                                            <InboxApplicationRow key={app.id} app={app} tripId={trip.id} />
-                                        ))}
-                                    </tbody>
-                                </table>
-                            )}
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {applications.map((app) => (
+                                <ApplicationCard key={app.id} application={app} tripId={trip.id} />
+                            ))}
                         </div>
-                    </div>
-
+                    )}
                 </div>
 
-                {/* Right Column: KPIs + Summary */}
-                <div className="flex flex-col gap-6">
+                {/* Right Column (1/3): Summary (Sticky) */}
+                <div className="lg:col-span-1">
+                    <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 lg:sticky lg:top-8">
+                        {/* Mini Carousel/Cover */}
+                        <div className="mb-6 rounded-2xl overflow-hidden aspect-video bg-slate-100 relative">
+                            {orderedImages.length > 0 ? (
+                                <Carousel images={orderedImages} className="w-full h-full" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs font-bold uppercase">
+                                    Нет фото
+                                </div>
+                            )}
+                        </div>
 
-                    {/* KPIs */}
-                    <div className="flex flex-col gap-4">
-                        <StatCard
-                            label="Pending Review"
-                            value={pendingApps}
-                            icon={<Clock className="w-5 h-5 text-amber-600" />}
-                            bg="bg-amber-50"
-                        />
-                        <StatCard
-                            label="Approved"
-                            value={approvedApps}
-                            icon={<UserCheck className="w-5 h-5 text-emerald-600" />}
-                            bg="bg-emerald-50"
-                        />
-                        <StatCard
-                            label="Seats Left"
-                            value={`${trip.seats_left}/${trip.seats_total}`}
-                            subtext={`${occupancy}% Full`}
-                            icon={<Armchair className="w-5 h-5 text-indigo-600" />}
-                            bg="bg-indigo-50"
-                        />
-                        <StatCard
-                            label="Total Apps"
-                            value={totalApps}
-                            icon={<Users className="w-5 h-5 text-blue-600" />}
-                            bg="bg-blue-50"
-                        />
-                    </div>
+                        <h3 className="text-lg font-bold text-slate-900 mb-4">Сводка поездки</h3>
 
-                    {/* Trip Summary Card */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm ring-1 ring-slate-100">
-                        <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-6 pb-4 border-b border-slate-50">Trip Summary</h3>
-
-                        <dl className="space-y-6">
-                            <div className="flex gap-4">
-                                <div className="p-2 bg-slate-50 rounded-lg h-fit">
+                        <div className="space-y-4">
+                            <div className="flex items-start gap-3">
+                                <div className="p-2 bg-slate-50 rounded-xl">
                                     <MapPin className="w-5 h-5 text-slate-500" />
                                 </div>
                                 <div>
-                                    <dt className="text-xs font-medium text-slate-500 uppercase">Route</dt>
-                                    <dd className="mt-1 text-sm text-slate-900 font-medium">{trip.from_city} &rarr; {trip.to_place}</dd>
+                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Локация</div>
+                                    <div className="font-semibold text-slate-900">{trip.to_place || 'Не указана'}</div>
                                 </div>
                             </div>
 
-                            <div className="flex gap-4">
-                                <div className="p-2 bg-slate-50 rounded-lg h-fit">
+                            <div className="flex items-start gap-3">
+                                <div className="p-2 bg-slate-50 rounded-xl">
                                     <Calendar className="w-5 h-5 text-slate-500" />
                                 </div>
                                 <div>
-                                    <dt className="text-xs font-medium text-slate-500 uppercase">Dates</dt>
-                                    <dd className="mt-1 text-sm text-slate-900">{trip.start_date} {trip.end_date ? `- ${trip.end_date}` : ''}</dd>
+                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Даты</div>
+                                    <div className="font-semibold text-slate-900">{trip.start_date || 'TBD'}</div>
                                 </div>
                             </div>
 
-                            <div className="flex gap-4">
-                                <div className="p-2 bg-slate-50 rounded-lg h-fit">
+                            <div className="flex items-start gap-3">
+                                <div className="p-2 bg-slate-50 rounded-xl">
                                     <Banknote className="w-5 h-5 text-slate-500" />
                                 </div>
                                 <div>
-                                    <dt className="text-xs font-medium text-slate-500 uppercase">Price</dt>
-                                    <dd className="mt-1 text-lg font-bold text-slate-900">
-                                        {trip.price_amount ? `${trip.price_amount} ${trip.price_currency}` : 'Free / TBD'}
-                                    </dd>
+                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Цена</div>
+                                    <div className="font-semibold text-slate-900">{trip.price_amount ? `${trip.price_amount} ${trip.price_currency}` : 'Не указана'}</div>
                                 </div>
                             </div>
 
-                            <div className="pt-4 border-t border-slate-50">
-                                <dt className="text-xs font-medium text-slate-500 uppercase mb-2">Description</dt>
-                                <dd className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">{trip.description_clean}</dd>
+                            <div className="flex items-start gap-3">
+                                <div className="p-2 bg-slate-50 rounded-xl">
+                                    <UserCheck className="w-5 h-5 text-emerald-600" />
+                                </div>
+                                <div>
+                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Одобрено</div>
+                                    <div className="font-semibold text-slate-900">{approvedApps} / {trip.seats_total || '?'} мест</div>
+                                </div>
                             </div>
-                        </dl>
-                    </div>
+                        </div>
 
+                        <div className="mt-6 pt-6 border-t border-slate-50">
+                            <div className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Описание</div>
+                            <p className="text-sm text-slate-600 line-clamp-4 leading-relaxed">
+                                {trip.description_clean || 'Описания нет'}
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
             </div>

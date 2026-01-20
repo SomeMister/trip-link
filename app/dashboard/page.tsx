@@ -1,159 +1,85 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { PageContainer } from '@/components/ui/PageContainer'
-import { Plus, Users, Map, Calendar, ArrowRight } from 'lucide-react'
+import { Plus } from 'lucide-react'
+import { TripCard } from '@/components/dashboard/TripCard'
 
 export default async function DashboardPage() {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
 
+    // Получаем поездки вместе со статусами заявок для бейджей
     const { data: trips } = await supabase
         .from('trips')
-        .select('*')
-        .eq('owner_id', user?.id || '')
+        .select('*, applications(status), trip_images(storage_path, position)')
         .order('created_at', { ascending: false })
 
-    // Calculate Stats
+    // Сбор статистики
     const totalTrips = trips?.length || 0
     const activeTrips = trips?.filter(t => t.status === 'published').length || 0
-    const totalSeats = trips?.reduce((acc, t) => acc + (t.seats_total || 0), 0) || 0
-    const seatsLeft = trips?.reduce((acc, t) => acc + (t.seats_left || 0), 0) || 0
+    const totalCapacity = trips?.reduce((acc, t) => acc + (t.seats_total || 0), 0) || 0
+    const totalOpenSeats = trips?.reduce((acc, t) => acc + (t.seats_left || 0), 0) || 0
+
+    const stats = [
+        { label: 'Всего поездок', value: totalTrips, icon: '🌍', color: 'bg-blue-50 text-blue-600' },
+        { label: 'Опубликовано', value: activeTrips, icon: '✅', color: 'bg-emerald-50 text-emerald-600' },
+        { label: 'Всего мест', value: totalCapacity, icon: '👥', color: 'bg-purple-50 text-purple-600' },
+        { label: 'Свободно', value: totalOpenSeats, icon: '🎟️', color: 'bg-amber-50 text-amber-600' },
+    ]
 
     return (
-        <PageContainer>
-            {/* Header */}
-            <div className="flex justify-between items-center mb-10">
+        <div className="space-y-10 pb-12">
+            {/* Хедер дашборда */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
-                    <p className="text-slate-500 mt-1">Manage your trips and applications</p>
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tight">Мой Дашборд</h1>
+                    <p className="text-slate-500 font-medium">Управляйте вашими приключениями и заявками</p>
                 </div>
                 <Link
                     href="/dashboard/trips/new"
-                    className="flex items-center gap-2 rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-200 hover:bg-indigo-500 transition-all hover:-translate-y-0.5"
+                    className="inline-flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-teal-600/20 active:scale-95"
                 >
-                    <Plus className="w-4 h-4" />
-                    Create Trip
+                    <Plus className="h-5 w-5" />
+                    Создать поездку
                 </Link>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-                <StatCard
-                    label="Total Trips"
-                    value={totalTrips}
-                    icon={<Map className="w-5 h-5 text-indigo-600" />}
-                    bg="bg-indigo-50"
-                />
-                <StatCard
-                    label="Active Trips"
-                    value={activeTrips}
-                    icon={<Calendar className="w-5 h-5 text-emerald-600" />}
-                    bg="bg-emerald-50"
-                />
-                <StatCard
-                    label="Total Capacity"
-                    value={totalSeats}
-                    icon={<Users className="w-5 h-5 text-blue-600" />}
-                    bg="bg-blue-50"
-                />
-                <StatCard
-                    label="Open Seats"
-                    value={seatsLeft}
-                    icon={<Users className="w-5 h-5 text-amber-600" />}
-                    bg="bg-amber-50"
-                />
+            {/* Сетка статистики */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {stats.map((stat, i) => (
+                    <div key={i} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                        <div className={`w-10 h-10 ${stat.color} rounded-xl flex items-center justify-center text-xl mb-4`}>
+                            {stat.icon}
+                        </div>
+                        <div className="text-2xl font-black text-slate-900">{stat.value}</div>
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">{stat.label}</div>
+                    </div>
+                ))}
             </div>
 
-            {/* Recent Trips Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-                <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
-                    <h3 className="font-semibold text-slate-900">Recent Trips</h3>
+            {/* Список поездок (Сетка) */}
+            <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-bold text-slate-900">Ваши поездки</h2>
                 </div>
 
-                {!trips || trips.length === 0 ? (
-                    <div className="text-center py-20">
-                        <div className="mx-auto h-12 w-12 text-slate-300 mb-3">
-                            <Map className="w-full h-full" />
-                        </div>
-                        <p className="text-slate-500">No trips created yet.</p>
+                {trips && trips.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {trips.map((trip) => (
+                            <TripCard key={trip.id} trip={trip} />
+                        ))}
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead>
-                                <tr className="bg-slate-50/50 text-xs uppercase tracking-wider text-slate-500 font-medium">
-                                    <th className="px-6 py-4">Trip Title</th>
-                                    <th className="px-6 py-4">Status</th>
-                                    <th className="px-6 py-4">Route</th>
-                                    <th className="px-6 py-4">Dates</th>
-                                    <th className="px-6 py-4">Occupancy</th>
-                                    <th className="px-6 py-4 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {trips.map((trip) => (
-                                    <tr
-                                        key={trip.id}
-                                        className="hover:bg-slate-50/80 transition-colors group"
-                                    >
-                                        <td className="px-6 py-4">
-                                            <div className="font-semibold text-slate-900">{trip.title}</div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${trip.status === 'published' ? 'bg-emerald-100 text-emerald-700' :
-                                                trip.status === 'closed' ? 'bg-slate-100 text-slate-600' :
-                                                    'bg-amber-100 text-amber-700'
-                                                }`}>
-                                                {trip.status.charAt(0).toUpperCase() + trip.status.slice(1)}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-slate-600">
-                                            <div className="flex items-center gap-1">
-                                                {trip.from_city} <ArrowRight className="w-3 h-3 text-slate-400" /> {trip.to_place}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-slate-600">
-                                            {trip.start_date}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
-                                                    <div
-                                                        className="h-full bg-indigo-500 rounded-full"
-                                                        style={{ width: `${((trip.seats_total - trip.seats_left) / trip.seats_total) * 100}%` }}
-                                                    />
-                                                </div>
-                                                <span className="text-xs text-slate-500 font-medium">{trip.seats_total - trip.seats_left}/{trip.seats_total}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <Link
-                                                href={`/dashboard/trips/${trip.id}`}
-                                                className="text-sm font-medium text-indigo-600 hover:text-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity"
-                                            >
-                                                Manage
-                                            </Link>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-200">
+                        <div className="text-4xl mb-4">📭</div>
+                        <h3 className="text-lg font-bold text-slate-900">Поездок пока нет</h3>
+                        <p className="text-slate-500 mb-6">Создайте свою первую поездку, чтобы начать получать заявки</p>
+                        <Link
+                            href="/dashboard/trips/new"
+                            className="text-teal-600 font-bold hover:underline"
+                        >
+                            Создать сейчас &rarr;
+                        </Link>
                     </div>
                 )}
-            </div>
-        </PageContainer>
-    )
-}
-
-function StatCard({ label, value, icon, bg }: { label: string, value: number, icon: React.ReactNode, bg: string }) {
-    return (
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-start justify-between">
-            <div>
-                <p className="text-sm font-medium text-slate-500 mb-1">{label}</p>
-                <h3 className="text-2xl font-bold text-slate-900">{value}</h3>
-            </div>
-            <div className={`p-3 rounded-lg ${bg}`}>
-                {icon}
             </div>
         </div>
     )

@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { ApplicationForm } from '@/components/ApplicationForm'
 import { Carousel } from '@/components/ui/Carousel'
-import { CalendarDays, MapPin, Coins } from "lucide-react"
+import { CalendarDays, MapPin, Coins, Users } from "lucide-react"
 import { MobileStickyCTA } from "@/components/MobileStickyCTA"
 
 export const dynamic = 'force-dynamic'
@@ -55,7 +55,7 @@ export default async function PublicTripPage({ params }: { params: Promise<{ slu
                                 {trip.title}
                             </h1>
 
-                            <div className="flex flex-wrap gap-3">
+                            <div className="flex flex-wrap items-center gap-3">
                                 {trip.start_date && (
                                     <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-100 text-sm font-semibold text-slate-700">
                                         <CalendarDays className="h-4 w-4 text-teal-600" />
@@ -72,6 +72,15 @@ export default async function PublicTripPage({ params }: { params: Promise<{ slu
                                     <Coins className="h-4 w-4 text-teal-600" />
                                     {trip.price_amount ? `${trip.price_amount} ${trip.price_currency}` : 'Цена не указана'}
                                 </div>
+                                {(trip.seats_left !== null || isFull) && (
+                                    <div className={`flex items-center gap-2 px-4 py-2 rounded-xl shadow-sm border text-sm font-semibold ${isFull
+                                        ? 'bg-white border-rose-100 text-rose-700'
+                                        : 'bg-white border-emerald-100 text-emerald-700'
+                                        }`}>
+                                        <Users className={`h-4 w-4 ${isFull ? 'text-rose-600' : 'text-emerald-600'}`} />
+                                        {isFull ? 'Все места заняты' : `Осталось ${trip.seats_left} мест`}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -86,11 +95,7 @@ export default async function PublicTripPage({ params }: { params: Promise<{ slu
                     </div>
 
                     <div id="application-section" className="space-y-6 scroll-mt-6">
-                        <div className="bg-white rounded-3xl p-8 shadow-xl border border-slate-100">
-                            <h3 className="text-2xl font-bold text-slate-900 mb-2">Участвовать</h3>
-                            <p className={`mb-6 font-bold ${isFull ? 'text-rose-600' : 'text-emerald-600'}`}>
-                                {isFull ? 'Все места заняты' : trip.seats_left !== null ? `Осталось ${trip.seats_left} мест` : 'Запись открыта'}
-                            </p>
+                        <div>
 
                             {isFull ? (
                                 <div className="text-center py-4 px-4 bg-rose-50 rounded-2xl text-rose-700 font-medium">

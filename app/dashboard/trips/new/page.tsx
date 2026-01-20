@@ -6,12 +6,13 @@ import { extractTripDetails } from '@/lib/extractFromText'
 import { ParsedTripFields } from '@/lib/types'
 import { PageContainer } from '@/components/ui/PageContainer'
 import { ImageUpload } from '@/components/ui/ImageUpload'
+import { Wand2, Import, Type, Link as LinkIcon, Edit3 } from 'lucide-react'
 
 const initialState: CreateTripState = { message: null, errors: {} }
 
 export default function NewTripPage() {
     const [state, formAction, isPending] = useActionState(createTrip, initialState)
-    const [activeTab, setActiveTab] = useState<'paste' | 'telegram'>('paste')
+    const [activeTab, setActiveTab] = useState<'paste' | 'telegram' | 'manual'>('paste')
 
     // Inputs
     const [rawText, setRawText] = useState('')
@@ -21,13 +22,13 @@ export default function NewTripPage() {
 
     const [fields, setFields] = useState<ParsedTripFields>({})
 
-    // Handler for Paste Text
+    // Handler for Paste Text - Auto-fills form state only
     const handlePasteParse = () => {
         const { fields: extracted } = extractTripDetails(rawText)
         setFields(prev => ({ ...prev, ...extracted }))
     }
 
-    // Handler for Telegram Import
+    // Handler for Telegram Import - Auto-fills form state only
     const handleTelegramImport = async () => {
         setLoadingImport(true)
         setImportError(null)
@@ -64,98 +65,138 @@ export default function NewTripPage() {
 
     return (
         <PageContainer>
-            <div>
-                <h2 className="text-2xl font-bold mb-6 text-gray-900">Create New Trip</h2>
+            <form action={formAction} className="max-w-6xl mx-auto space-y-12">
+                <input type="hidden" name="description_raw" value={rawText} />
 
-                {/* Tabs */}
-                <div className="flex justify-center mb-8">
-                    <div className="bg-white p-1 rounded-xl shadow-sm ring-1 ring-slate-100 inline-flex">
-                        <button
-                            onClick={() => setActiveTab('paste')}
-                            className={`${activeTab === 'paste' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'} px-6 py-2.5 rounded-lg text-sm font-medium transition-all`}
-                        >
-                            Paste Text
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('telegram')}
-                            className={`${activeTab === 'telegram' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'} px-6 py-2.5 rounded-lg text-sm font-medium transition-all`}
-                        >
-                            Telegram URL
-                        </button>
-                    </div>
+                {/* Header */}
+                <div className="text-center space-y-2">
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tight">Create New Trip</h1>
+                    <p className="text-slate-500 font-medium text-lg">Paste your trip details and let AI handle the rest</p>
                 </div>
 
-                {/* Import Area */}
-                <div className="bg-white p-8 rounded-2xl shadow-sm ring-1 ring-slate-100 mb-8 transition-all">
-                    {activeTab === 'paste' ? (
-                        <>
-                            <label className="block text-sm font-semibold text-slate-900 mb-3">
-                                Paste Post Text
-                            </label>
-                            <textarea
-                                className="w-full h-40 p-4 border-0 ring-1 ring-slate-200 rounded-xl mb-4 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-600 bg-slate-50 focus:bg-white transition-all resize-none"
-                                placeholder="Paste your Instagram/Facebook text here..."
-                                value={rawText}
-                                onChange={(e) => setRawText(e.target.value)}
-                            />
-                            <div className="flex justify-end">
-                                <button
-                                    type="button"
-                                    onClick={handlePasteParse}
-                                    className="px-5 py-2.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 text-sm font-semibold transition-colors"
-                                >
-                                    Auto-Fill Form
-                                </button>
-                            </div>
-                        </>
-                    ) : (
-                        <>
-                            <label className="block text-sm font-semibold text-slate-900 mb-3">
-                                Telegram Message URL
-                            </label>
-                            {importError && (
-                                <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm border border-red-100">
-                                    {importError}
+                {/* Hero Section: Grid 2 Cols */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+
+                    {/* Left Col: Input Card */}
+                    <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-2 flex flex-col">
+
+                        {/* Tabs */}
+                        <div className="flex p-1.5 bg-slate-50 rounded-2xl mb-2">
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('paste')}
+                                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'paste' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-black/5' : 'text-slate-400 hover:text-slate-700'}`}
+                            >
+                                <Type size={16} />
+                                <span className="hidden sm:inline">Paste Text</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('telegram')}
+                                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'telegram' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-black/5' : 'text-slate-400 hover:text-slate-700'}`}
+                            >
+                                <LinkIcon size={16} />
+                                <span className="hidden sm:inline">Telegram Link</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('manual')}
+                                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'manual' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-black/5' : 'text-slate-400 hover:text-slate-700'}`}
+                            >
+                                <Edit3 size={16} />
+                                <span className="hidden sm:inline">Manual</span>
+                            </button>
+                        </div>
+
+                        {/* Card Content */}
+                        <div className="flex-1 p-6 flex flex-col justify-center">
+                            {activeTab === 'paste' && (
+                                <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
+                                    <textarea
+                                        className="w-full h-48 p-5 rounded-2xl border-0 bg-slate-50 ring-1 ring-slate-100 placeholder:text-slate-400 focus:ring-2 focus:ring-teal-500 focus:bg-white transition-all resize-none text-slate-900 leading-relaxed text-base"
+                                        placeholder="Paste a trip post, Instagram caption, or Telegram message here..."
+                                        value={rawText}
+                                        onChange={(e) => setRawText(e.target.value)}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handlePasteParse}
+                                        disabled={!rawText.trim()}
+                                        className="w-full py-4 bg-teal-600 text-white rounded-2xl hover:bg-teal-700 text-lg font-bold shadow-lg shadow-teal-600/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group"
+                                    >
+                                        <Wand2 className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                                        Auto-Fill Trip
+                                    </button>
                                 </div>
                             )}
-                            <div className="flex gap-3 mb-6">
-                                <input
-                                    type="text"
-                                    className="flex-1 p-3 border-0 ring-1 ring-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-600 bg-slate-50 focus:bg-white transition-all"
-                                    placeholder="https://t.me/channel/123"
-                                    value={telegramUrl}
-                                    onChange={(e) => setTelegramUrl(e.target.value)}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={handleTelegramImport}
-                                    disabled={loadingImport}
-                                    className="px-5 py-2.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 text-sm font-semibold disabled:opacity-50 transition-colors"
-                                >
-                                    {loadingImport ? 'Importing...' : 'Import'}
-                                </button>
-                            </div>
-                            {rawText && (
-                                <div className="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-100">
-                                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Imported Text Preview</p>
-                                    <div className="text-sm text-slate-600 whitespace-pre-wrap max-h-32 overflow-y-auto">
-                                        {rawText}
+
+                            {activeTab === 'telegram' && (
+                                <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-slate-900 ml-1">Telegram URL</label>
+                                        <input
+                                            type="text"
+                                            className="w-full p-4 rounded-2xl border-0 bg-slate-50 ring-1 ring-slate-100 placeholder:text-slate-400 focus:ring-2 focus:ring-teal-500 focus:bg-white transition-all text-slate-900"
+                                            placeholder="https://t.me/channel/123"
+                                            value={telegramUrl}
+                                            onChange={(e) => setTelegramUrl(e.target.value)}
+                                        />
                                     </div>
+                                    {importError && (
+                                        <div className="p-3 bg-rose-50 text-rose-700 rounded-xl text-sm font-medium border border-rose-100 text-center">
+                                            {importError}
+                                        </div>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={handleTelegramImport}
+                                        disabled={loadingImport || !telegramUrl.trim()}
+                                        className="w-full py-4 bg-teal-600 text-white rounded-2xl hover:bg-teal-700 text-lg font-bold shadow-lg shadow-teal-600/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {loadingImport ? (
+                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        ) : (
+                                            <Import className="w-5 h-5" />
+                                        )}
+                                        {loadingImport ? 'Importing...' : 'Auto-Fill from Link'}
+                                    </button>
                                 </div>
                             )}
-                        </>
-                    )}
+
+                            {activeTab === 'manual' && (
+                                <div className="text-center py-12 animate-in fade-in zoom-in-95 duration-300">
+                                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+                                        <Edit3 size={32} />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-slate-900 mb-2">Manual Mode</h3>
+                                    <p className="text-slate-500 max-w-xs mx-auto">
+                                        Skip the magic. Fill in the trip details in the section below.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Right Col: Media Card */}
+                    <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 flex flex-col h-full min-h-[400px]">
+                        <ImageUpload name="photos" maxFiles={5} className="h-full flex flex-col" />
+                    </div>
 
                 </div>
 
-                {/* Step 2: Form */}
-                <form action={formAction} className="bg-white p-8 rounded-2xl shadow-sm ring-1 ring-slate-100 space-y-8">
-                    <input type="hidden" name="description_raw" value={rawText} />
+                {/* Secondary Section: Details */}
+                <div className="space-y-6 pt-8 border-t border-slate-100">
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="h-px bg-slate-200 flex-1"></div>
+                        <h2 className="text-slate-400 font-bold uppercase tracking-wider text-sm">Trip Details</h2>
+                        <div className="h-px bg-slate-200 flex-1"></div>
+                    </div>
 
-                    <div className="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
 
-                        <div className="sm:col-span-4">
-                            <label htmlFor="title" className="block text-sm font-semibold text-slate-900 mb-2">Trip Title</label>
+                        {/* Title - Full Width */}
+                        <div className="lg:col-span-4 space-y-2">
+                            <label htmlFor="title" className="block text-sm font-bold text-slate-700 ml-1">Trip Title</label>
                             <input
                                 type="text"
                                 name="title"
@@ -163,144 +204,148 @@ export default function NewTripPage() {
                                 required
                                 value={fields.title || ''}
                                 onChange={handleChange}
-                                className="block w-full rounded-lg border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-slate-50 focus:bg-white transition-all"
+                                placeholder="e.g. Skiing in Alps"
+                                className="block w-full rounded-2xl border-0 py-3.5 px-4 text-slate-900 bg-white ring-1 ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-teal-500 transition-all font-medium text-lg"
                             />
-                            {state.errors?.title && <p className="text-red-500 text-xs mt-1">{state.errors.title}</p>}
+                            {state.errors?.title && <p className="text-rose-500 text-xs mt-1 font-bold">{state.errors.title}</p>}
                         </div>
 
-                        <div className="sm:col-span-3">
-                            <label htmlFor="start_date" className="block text-sm font-semibold text-slate-900 mb-2">Start Date</label>
-                            <input
-                                type="date"
-                                name="start_date"
-                                id="start_date"
-                                value={fields.start_date || ''}
-                                onChange={handleChange}
-                                className="block w-full rounded-lg border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-slate-50 focus:bg-white transition-all"
-                            />
-                        </div>
-
-                        <div className="sm:col-span-3">
-                            <label htmlFor="end_date" className="block text-sm font-semibold text-slate-900 mb-2">End Date</label>
-                            <input
-                                type="date"
-                                name="end_date"
-                                id="end_date"
-                                value={fields.end_date || ''}
-                                onChange={handleChange}
-                                className="block w-full rounded-lg border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-slate-50 focus:bg-white transition-all"
-                            />
-                        </div>
-
-                        <div className="sm:col-span-3">
-                            <label htmlFor="from_city" className="block text-sm font-semibold text-slate-900 mb-2">From</label>
-                            <input
-                                type="text"
-                                name="from_city"
-                                id="from_city"
-                                value={fields.from_city || ''}
-                                onChange={handleChange}
-                                className="block w-full rounded-lg border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-slate-50 focus:bg-white transition-all"
-                            />
-                        </div>
-
-                        <div className="sm:col-span-3">
-                            <label htmlFor="to_place" className="block text-sm font-semibold text-slate-900 mb-2">To</label>
-                            <input
-                                type="text"
-                                name="to_place"
-                                id="to_place"
-                                value={fields.to_place || ''}
-                                onChange={handleChange}
-                                className="block w-full rounded-lg border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-slate-50 focus:bg-white transition-all"
-                            />
-                        </div>
-
-                        <div className="sm:col-span-2">
-                            <label htmlFor="price_amount" className="block text-sm font-semibold text-slate-900 mb-2">Price</label>
+                        {/* Price & Currency */}
+                        <div className="lg:col-span-1 space-y-2">
+                            <label htmlFor="price_amount" className="block text-sm font-bold text-slate-700 ml-1">Price</label>
                             <input
                                 type="number"
                                 name="price_amount"
                                 id="price_amount"
                                 value={fields.price_amount || ''}
                                 onChange={handleChange}
-                                className="block w-full rounded-lg border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-slate-50 focus:bg-white transition-all"
+                                className="block w-full rounded-2xl border-0 py-3.5 px-4 text-slate-900 bg-white ring-1 ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-teal-500 transition-all font-medium"
                             />
                         </div>
-
-                        <div className="sm:col-span-2">
-                            <label htmlFor="price_currency" className="block text-sm font-semibold text-slate-900 mb-2">Currency</label>
+                        <div className="lg:col-span-1 space-y-2">
+                            <label htmlFor="price_currency" className="block text-sm font-bold text-slate-700 ml-1">Currency</label>
                             <select
                                 name="price_currency"
                                 id="price_currency"
                                 value={fields.price_currency || 'PLN'}
                                 onChange={handleChange}
-                                className="block w-full rounded-lg border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-slate-50 focus:bg-white transition-all"
+                                className="block w-full rounded-2xl border-0 py-3.5 px-4 text-slate-900 bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-teal-500 transition-all font-medium appearance-none"
                             >
                                 <option value="PLN">PLN</option>
                                 <option value="EUR">EUR</option>
                                 <option value="USD">USD</option>
+                                <option value="BYN">BYN</option>
+                                <option value="RUB">RUB</option>
                             </select>
                         </div>
 
-                        <div className="sm:col-span-2">
-                            <label htmlFor="seats_total" className="block text-sm font-semibold text-slate-900 mb-2">Seats</label>
+                        {/* Route */}
+                        <div className="lg:col-span-2 space-y-2">
+                            <label htmlFor="from_city" className="block text-sm font-bold text-slate-700 ml-1">From</label>
+                            <input
+                                type="text"
+                                name="from_city"
+                                id="from_city"
+                                value={fields.from_city || ''}
+                                onChange={handleChange}
+                                className="block w-full rounded-2xl border-0 py-3.5 px-4 text-slate-900 bg-white ring-1 ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-teal-500 transition-all font-medium"
+                            />
+                        </div>
+                        <div className="lg:col-span-2 space-y-2">
+                            <label htmlFor="to_place" className="block text-sm font-bold text-slate-700 ml-1">To</label>
+                            <input
+                                type="text"
+                                name="to_place"
+                                id="to_place"
+                                value={fields.to_place || ''}
+                                onChange={handleChange}
+                                className="block w-full rounded-2xl border-0 py-3.5 px-4 text-slate-900 bg-white ring-1 ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-teal-500 transition-all font-medium"
+                            />
+                        </div>
+
+                        {/* Dates */}
+                        <div className="lg:col-span-1 space-y-2">
+                            <label htmlFor="start_date" className="block text-sm font-bold text-slate-700 ml-1">Start</label>
+                            <input
+                                type="date"
+                                name="start_date"
+                                id="start_date"
+                                value={fields.start_date || ''}
+                                onChange={handleChange}
+                                className="block w-full rounded-2xl border-0 py-3.5 px-4 text-slate-900 bg-white ring-1 ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-teal-500 transition-all font-medium"
+                            />
+                        </div>
+                        <div className="lg:col-span-1 space-y-2">
+                            <label htmlFor="end_date" className="block text-sm font-bold text-slate-700 ml-1">End</label>
+                            <input
+                                type="date"
+                                name="end_date"
+                                id="end_date"
+                                value={fields.end_date || ''}
+                                onChange={handleChange}
+                                className="block w-full rounded-2xl border-0 py-3.5 px-4 text-slate-900 bg-white ring-1 ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-teal-500 transition-all font-medium"
+                            />
+                        </div>
+
+                        {/* Total Seats */}
+                        <div className="md:col-span-2 lg:col-span-2 space-y-2">
+                            <label htmlFor="seats_total" className="block text-sm font-bold text-slate-700 ml-1">Total Seats</label>
                             <input
                                 type="number"
                                 name="seats_total"
                                 id="seats_total"
                                 value={fields.seats_total || ''}
                                 onChange={handleChange}
-                                className="block w-full rounded-lg border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-slate-50 focus:bg-white transition-all"
+                                className="block w-full rounded-2xl border-0 py-3.5 px-4 text-slate-900 bg-white ring-1 ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-teal-500 transition-all font-medium"
                             />
                         </div>
 
-                        <div className="sm:col-span-6">
-                            <ImageUpload name="photos" maxFiles={5} />
-                        </div>
-
-                        <div className="sm:col-span-6">
-                            <label htmlFor="description_clean" className="block text-sm font-semibold text-slate-900 mb-2">Description</label>
+                        {/* Description */}
+                        <div className="lg:col-span-6 space-y-2">
+                            <label htmlFor="description_clean" className="block text-sm font-bold text-slate-700 ml-1">Description</label>
                             <textarea
                                 name="description_clean"
                                 id="description_clean"
                                 rows={6}
                                 value={fields.description_clean || ''}
                                 onChange={handleChange}
-                                className="block w-full rounded-lg border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-slate-50 focus:bg-white transition-all"
+                                className="block w-full rounded-2xl border-0 py-3.5 px-4 text-slate-900 bg-white ring-1 ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-teal-500 transition-all resize-none leading-relaxed"
                             />
                         </div>
 
                     </div>
 
+                    {/* Error Message */}
                     {state.message && (
-                        <div className="p-4 bg-red-50 text-red-700 rounded text-sm">
+                        <div className="p-4 bg-rose-50 text-rose-700 rounded-2xl text-sm font-bold border border-rose-100">
                             {state.message}
                         </div>
                     )}
 
-                    <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
+                    {/* Actions */}
+                    <div className="flex items-center justify-end gap-4 pt-4 pb-12">
                         <button
                             type="submit"
                             name="status"
                             value="draft"
                             disabled={isPending}
-                            className="rounded-lg bg-white py-2.5 px-5 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-all font-medium"
+                            className="px-8 py-3 rounded-xl bg-white text-slate-600 font-bold text-sm ring-1 ring-slate-200 hover:bg-slate-50 transition-all active:scale-95"
                         >
-                            Save as Draft
+                            Save Draft
                         </button>
                         <button
                             type="submit"
                             name="status"
                             value="published"
                             disabled={isPending}
-                            className="rounded-lg bg-indigo-600 py-2.5 px-5 text-sm font-semibold text-white shadow-lg shadow-indigo-200 hover:bg-indigo-500 transition-all mb-1"
+                            className="px-8 py-3 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 shadow-xl shadow-slate-900/20 transition-all active:scale-95 flex items-center gap-2"
                         >
                             {isPending ? 'Publishing...' : 'Publish Trip'}
                         </button>
                     </div>
-                </form>
-            </div>
+
+                </div>
+            </form>
         </PageContainer>
     )
 }

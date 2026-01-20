@@ -12,13 +12,20 @@ interface ImageUploadProps {
 export function ImageUpload({ name = 'photos', maxFiles = 5, className = '' }: ImageUploadProps) {
     const [previews, setPreviews] = useState<string[]>([])
     const fileInputRef = useRef<HTMLInputElement>(null)
-    const dataTransferRef = useRef<DataTransfer>(new DataTransfer())
+    const dataTransferRef = useRef<DataTransfer | null>(null)
+
+    const getDataTransfer = () => {
+        if (!dataTransferRef.current) {
+            dataTransferRef.current = new DataTransfer()
+        }
+        return dataTransferRef.current
+    }
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newFiles = e.target.files
         if (!newFiles) return
 
-        const dt = dataTransferRef.current
+        const dt = getDataTransfer()
         const availableSlots = maxFiles - dt.items.length
 
         const newFileUrls: string[] = []
@@ -36,7 +43,7 @@ export function ImageUpload({ name = 'photos', maxFiles = 5, className = '' }: I
     }
 
     const removeImage = (index: number) => {
-        const dt = dataTransferRef.current
+        const dt = getDataTransfer()
         const newDt = new DataTransfer()
         const files = dt.files
 

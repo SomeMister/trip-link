@@ -55,7 +55,7 @@ export default async function PublicTripPage({ params }: { params: Promise<{ slu
                                 {trip.title}
                             </h1>
 
-                            <div className="flex flex-wrap items-center gap-3">
+                            <div className="flex flex-wrap items-center">
                                 {trip.start_date && (
                                     <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-100 text-sm font-semibold text-slate-700">
                                         <CalendarDays className="h-4 w-4 text-teal-600" />
@@ -94,8 +94,8 @@ export default async function PublicTripPage({ params }: { params: Promise<{ slu
                         </div>
                     </div>
 
-                    <div id="application-section" className="space-y-6 scroll-mt-6">
-                        <div>
+                    <div id="application-section" className="space-y-6 scroll-mt-6 lg:mt-24">
+                        <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
 
                             {isFull ? (
                                 <div className="text-center py-4 px-4 bg-rose-50 rounded-2xl text-rose-700 font-medium">

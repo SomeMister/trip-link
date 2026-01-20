@@ -32,8 +32,8 @@ export function ApplicationForm({ tripId }: { tripId: string }) {
     }
 
     return (
-        <div className="bg-white shadow-sm ring-1 ring-slate-100 rounded-2xl p-6 md:p-8">
-            <h3 className="text-xl font-bold text-slate-900 mb-6">Join this Trip</h3>
+        <div className="w-full">
+            <h3 className="text-2xl font-bold text-slate-900 mb-6">Join this Trip</h3>
             <form action={formAction} className="space-y-5">
                 <input type="hidden" name="trip_id" value={tripId} />
 
@@ -44,7 +44,7 @@ export function ApplicationForm({ tripId }: { tripId: string }) {
                         name="name"
                         id="name"
                         required
-                        className="block w-full rounded-lg border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-slate-50 focus:bg-white transition-all"
+                        className="block w-full rounded-lg border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-white transition-all"
                         placeholder="e.g. Alice Smith"
                     />
                     {state.errors?.name && <p className="text-red-600 text-xs mt-1">{state.errors.name}</p>}
@@ -103,7 +103,7 @@ export function ApplicationForm({ tripId }: { tripId: string }) {
                         name="contact_value"
                         id="contact_value"
                         required
-                        className="block w-full rounded-lg border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-slate-50 focus:bg-white transition-all"
+                        className="block w-full rounded-lg border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-white transition-all"
                         placeholder={
                             contactType === 'telegram' ? '@username' :
                                 contactType === 'instagram' ? '@handle' :
@@ -122,7 +122,7 @@ export function ApplicationForm({ tripId }: { tripId: string }) {
                         min="1"
                         defaultValue="1"
                         required
-                        className="block w-full rounded-lg border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-slate-50 focus:bg-white transition-all"
+                        className="block w-full rounded-lg border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-white transition-all"
                     />
                     {state.errors?.seats_requested && <p className="text-red-600 text-xs mt-1">{state.errors.seats_requested}</p>}
                 </div>
@@ -133,7 +133,7 @@ export function ApplicationForm({ tripId }: { tripId: string }) {
                         name="note"
                         id="note"
                         rows={3}
-                        className="block w-full rounded-lg border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-slate-50 focus:bg-white transition-all"
+                        className="block w-full rounded-lg border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-white transition-all"
                         placeholder="Any questions or special requests?"
                     />
                 </div>

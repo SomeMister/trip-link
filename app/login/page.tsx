@@ -30,6 +30,25 @@ export default function LoginPage() {
         setLoading(false)
     }
 
+    const handleGoogleLogin = async () => {
+        setLoading(true)
+        setMessage(null)
+
+        const supabase = createClient()
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: `${window.location.origin}/auth/callback`,
+            },
+        })
+
+        if (error) {
+            setMessage('Error logging in with Google: ' + error.message)
+            setLoading(false)
+        }
+        // No need to set loading false on success strictly, as we are redirecting
+    }
+
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
             <div className="w-full max-w-md space-y-8 p-10 bg-white shadow-xl shadow-slate-200/50 rounded-2xl ring-1 ring-slate-100">
@@ -66,13 +85,52 @@ export default function LoginPage() {
                             {loading ? 'Sending...' : 'Send Magic Link'}
                         </button>
                     </div>
+
+                    <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-slate-200" />
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                            <span className="bg-white px-2 text-slate-500">or</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <button
+                            type="button"
+                            disabled={loading}
+                            onClick={handleGoogleLogin}
+                            className="flex w-full items-center justify-center gap-3 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-slate-700 ring-1 ring-inset ring-slate-200 hover:bg-slate-50 focus:outline-offset-0 disabled:opacity-70 transition-all"
+                        >
+                            <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+                                <path
+                                    d="M12.0003 20.45c4.656 0 8.5566-3.2132 9.9806-7.5683l-3.003-1.0264c-0.9765 2.9804-3.6644 5.1818-6.9776 5.1818-4.0772 0-7.3828-3.3056-7.3828-7.3828s3.3056-7.3828 7.3828-7.3828c1.7828 0 3.414.6366 4.7004 1.6934l2.6033-2.6033c-1.9566-1.636-4.4842-2.623-7.3037-2.623-6.2087 0-11.2415 5.0327-11.2415 11.2415s5.0328 11.2415 11.2415 11.2415c.5704 0 1.1306-.0462 1.6783-.1348l-.3375-3.0818c-.439.071-.8905.109-1.3527.109z"
+                                    fill="#EA4335"
+                                />
+                                <path
+                                    d="M23.4883 10.6368c.1128.6014.172 1.2223.172 1.861 0 5.6192-3.9575 10.1472-9.1304 10.636l.3375 3.0818c6.9126-.6528 12.206-6.703 12.206-13.9174 0-1.0964-.1312-2.1616-.3795-3.1816l-3.2056.5202z"
+                                    fill="#4285F4"
+                                />
+                                <path
+                                    d="M5.0227 7.2348c-1.424 4.355-1.424 9.1752 0 13.5303l3.003-1.0264c-0.9766-2.9804-0.9766-6.2796 0-9.26l-3.003-1.244z"
+                                    fill="#FBBC05"
+                                />
+                                <path
+                                    d="M12.0003 3.5352c2.8195 0 5.347 1.054 7.3037 2.623l-2.6033 2.6033c-1.2864-1.0568-2.9176-1.6934-4.7004-1.6934-3.3132 0-6.001 2.2014-6.9776 5.1818l-3.003 1.2438c1.424-4.355 5.3246-7.5682 9.9806-7.5682z"
+                                    fill="#34A853"
+                                />
+                            </svg>
+                            <span className="text-sm font-semibold leading-6">Continue with Google</span>
+                        </button>
+                    </div>
+
                     {message && (
                         <div className={`p-4 rounded-lg text-sm text-center font-medium ${message.includes('Error') ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}>
                             {message}
                         </div>
                     )}
                 </form>
-            </div>
-        </div>
+            </div >
+        </div >
     )
 }

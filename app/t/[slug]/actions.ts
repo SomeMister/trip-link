@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 
 export type ApplicationState = {
     message: string | null
+    success?: boolean
     errors?: {
         name?: string[]
         contact?: string[]
@@ -72,7 +73,7 @@ export async function submitApplication(prevState: ApplicationState, formData: F
 
         // 3. Insert Application
         // Determine target column
-        const insertPayload: any = {
+        const insertPayload: Record<string, string | number> = {
             trip_id: tripId,
             name,
             seats_requested: seatsRequested,
@@ -95,7 +96,7 @@ export async function submitApplication(prevState: ApplicationState, formData: F
 
         // Success
         revalidatePath(`/t/${trip.slug}`)
-        return { message: 'Application sent successfully!' }
+        return { message: 'Application sent successfully!', success: true }
 
     } catch (error) {
         console.error('Submit Error:', error)

@@ -4,7 +4,7 @@ import { useActionState, useEffect, useState } from 'react'
 import { submitApplication, ApplicationState } from '@/app/t/[slug]/actions'
 import { CheckCircle2, MessageCircle, Instagram, Phone } from 'lucide-react'
 
-const initialState: ApplicationState = { message: null, errors: {} }
+const initialState: ApplicationState = { message: null, success: false }
 
 export function ApplicationForm({ tripId }: { tripId: string }) {
     const [state, formAction, isPending] = useActionState(submitApplication, initialState)
@@ -12,10 +12,10 @@ export function ApplicationForm({ tripId }: { tripId: string }) {
     const [contactType, setContactType] = useState<'telegram' | 'instagram' | 'phone'>('telegram')
 
     useEffect(() => {
-        if (state.message === 'Application sent successfully!') {
+        if (state.success) {
             setIsSuccess(true)
         }
-    }, [state.message])
+    }, [state.success])
 
     if (isSuccess) {
         return (

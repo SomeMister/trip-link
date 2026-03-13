@@ -9,6 +9,8 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false)
     const [message, setMessage] = useState<string | null>(null)
 
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '')
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
@@ -18,7 +20,7 @@ export default function LoginPage() {
         const { error } = await supabase.auth.signInWithOtp({
             email,
             options: {
-                emailRedirectTo: `${window.location.origin}/auth/callback`,
+                emailRedirectTo: `${appUrl}/auth/callback`,
             },
         })
 
@@ -38,7 +40,7 @@ export default function LoginPage() {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: `${window.location.origin}/auth/callback`,
+                redirectTo: `${appUrl}/auth/callback`,
             },
         })
 

@@ -4,8 +4,38 @@ import { ApplicationForm } from '@/components/ApplicationForm'
 import { Carousel } from '@/components/ui/Carousel'
 import { CalendarDays, MapPin, Coins, Users } from "lucide-react"
 import { MobileStickyCTA } from "@/components/MobileStickyCTA"
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+    const { slug } = await params
+    const supabase = await createClient()
+
+    const { data: trip } = await supabase
+        .from('trips')
+        .select('title, description_clean, to_place, start_date, cover_image_url')
+        .ilike('slug', slug)
+        .eq('status', 'published')
+        .single()
+
+    if (!trip) {
+        return { title: 'Trip Not Found' }
+    }
+
+    const description = trip.description_clean?.slice(0, 160)
+        || `${trip.to_place ? `Trip to ${trip.to_place}` : 'Trip'}${trip.start_date ? ` — ${trip.start_date}` : ''}`
+
+    return {
+        title: trip.title,
+        description,
+        openGraph: {
+            title: trip.title,
+            description,
+            ...(trip.cover_image_url ? { images: [trip.cover_image_url] } : {}),
+        },
+    }
+}
 
 export default async function PublicTripPage({ params }: { params: Promise<{ slug: string }> }) {
     const resolvedParams = await params
@@ -30,7 +60,7 @@ export default async function PublicTripPage({ params }: { params: Promise<{ slu
     }
 
     // Сортировка изображений
-    const orderedImages = trip.trip_images?.sort((a: any, b: any) => a.position - b.position) || []
+    const orderedImages = trip.trip_images?.sort((a: { position: number }, b: { position: number }) => a.position - b.position) || []
     const isFull = trip.seats_left !== null && trip.seats_left <= 0
 
     return (
@@ -70,7 +100,7 @@ export default async function PublicTripPage({ params }: { params: Promise<{ slu
                                 )}
                                 <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-100 text-sm font-semibold text-slate-700">
                                     <Coins className="h-4 w-4 text-teal-600" />
-                                    {trip.price_amount ? `${trip.price_amount} ${trip.price_currency}` : 'Цена не указана'}
+                                    {trip.price_amount ? `${trip.price_amount} ${trip.price_currency}` : 'Price not specified'}
                                 </div>
                                 {(trip.seats_left !== null || isFull) && (
                                     <div className={`flex items-center gap-2 px-4 py-2 rounded-xl shadow-sm border text-sm font-semibold ${isFull
@@ -78,14 +108,14 @@ export default async function PublicTripPage({ params }: { params: Promise<{ slu
                                         : 'bg-white border-emerald-100 text-emerald-700'
                                         }`}>
                                         <Users className={`h-4 w-4 ${isFull ? 'text-rose-600' : 'text-emerald-600'}`} />
-                                        {isFull ? 'Все места заняты' : `Осталось ${trip.seats_left} мест`}
+                                        {isFull ? 'All seats taken' : `${trip.seats_left} seats left`}
                                     </div>
                                 )}
                             </div>
                         </div>
 
                         <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
-                            <h3 className="text-xl font-bold text-slate-900 mb-4">О поездке</h3>
+                            <h3 className="text-xl font-bold text-slate-900 mb-4">About this trip</h3>
                             <div className="prose prose-slate max-w-none">
                                 <p className="text-slate-600 leading-relaxed whitespace-pre-wrap">
                                     {trip.description_clean || trip.description_raw}
@@ -97,13 +127,12 @@ export default async function PublicTripPage({ params }: { params: Promise<{ slu
                     <div id="application-section" className="space-y-6 scroll-mt-6 lg:mt-24">
                         <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
 
-                            {isFull ? (
-                                <div className="text-center py-4 px-4 bg-rose-50 rounded-2xl text-rose-700 font-medium">
-                                    К сожалению, мест больше нет. Но вы можете записаться в лист ожидания.
+                            {isFull && (
+                                <div className="text-center py-4 px-4 bg-rose-50 rounded-2xl text-rose-700 font-medium mb-6">
+                                    🔥 All seats are taken — your application will be added to the waitlist.
                                 </div>
-                            ) : (
-                                <ApplicationForm tripId={trip.id} />
                             )}
+                            <ApplicationForm tripId={trip.id} />
                         </div>
                     </div>
                 </div>

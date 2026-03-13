@@ -98,11 +98,14 @@ export async function createTrip(prevState: CreateTripState, formData: FormData)
             const fileExt = file.name.split('.').pop()
             const fileName = `${tripId}/${crypto.randomUUID()}.${fileExt}`
 
+            // Fix #13: assign position before async call to avoid race condition
+            const currentPosition = position++
+
             // Upload to Supabase Storage
             const uploadPromise = supabase.storage
                 .from('trip-photos')
                 .upload(fileName, file)
-                .then(async ({ data: uploadData, error: uploadError }) => {
+                .then(async ({ error: uploadError }) => {
                     if (uploadError) {
                         console.error('Upload error:', uploadError)
                         return null
@@ -111,7 +114,7 @@ export async function createTrip(prevState: CreateTripState, formData: FormData)
                     return supabase.from('trip_images').insert({
                         trip_id: tripId,
                         storage_path: fileName,
-                        position: position++
+                        position: currentPosition
                     })
                 })
 

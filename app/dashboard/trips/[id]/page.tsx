@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import { ApplicationCard } from '@/components/ApplicationCard'
 import { CloseTripButton } from './CloseTripButton'
 import { Carousel } from '@/components/ui/Carousel'
-import { Users, UserCheck, Clock, Armchair, MapPin, Calendar, Banknote } from 'lucide-react'
+import { Users, UserCheck, Clock, MapPin, Calendar, Banknote } from 'lucide-react'
 
 export default async function TripDetailsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -37,12 +37,9 @@ export default async function TripDetailsPage({ params }: { params: Promise<{ id
     // Calculate Trip Stats
     const totalApps = applications?.length || 0
     const approvedApps = applications?.filter(a => a.status === 'approved').length || 0
-    const waitlistApps = applications?.filter(a => a.status === 'waitlist').length || 0
-    const pendingApps = applications?.filter(a => a.status === 'new').length || 0
-    const occupancy = trip.seats_total ? Math.round(((trip.seats_total - trip.seats_left) / trip.seats_total) * 100) : 0
 
     // Sort images
-    const orderedImages = trip.trip_images?.sort((a: any, b: any) => a.position - b.position) || []
+    const orderedImages = trip.trip_images?.sort((a: { position: number }, b: { position: number }) => a.position - b.position) || []
 
     return (
         <PageContainer>
@@ -79,8 +76,8 @@ export default async function TripDetailsPage({ params }: { params: Promise<{ id
                 {/* Left Column (2/3): Inbox Grid */}
                 <div className="lg:col-span-2 space-y-6">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-bold text-slate-900">Inbox Заявок</h2>
-                        <span className="text-sm font-medium text-slate-500">{applications?.length || 0} всего</span>
+                        <h2 className="text-xl font-bold text-slate-900">Application Inbox</h2>
+                        <span className="text-sm font-medium text-slate-500">{applications?.length || 0} total</span>
                     </div>
 
                     {!applications || applications.length === 0 ? (
@@ -88,8 +85,8 @@ export default async function TripDetailsPage({ params }: { params: Promise<{ id
                             <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <Users className="w-8 h-8 text-slate-300" />
                             </div>
-                            <h3 className="text-lg font-bold text-slate-900">Заявок пока нет</h3>
-                            <p className="text-slate-500">Поделитесь ссылкой на поездку, чтобы получить первые отклики.</p>
+                            <h3 className="text-lg font-bold text-slate-900">No applications yet</h3>
+                            <p className="text-slate-500">Share the trip link to start receiving applications.</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -109,12 +106,12 @@ export default async function TripDetailsPage({ params }: { params: Promise<{ id
                                 <Carousel images={orderedImages} className="w-full h-full" />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs font-bold uppercase">
-                                    Нет фото
+                                    No photo
                                 </div>
                             )}
                         </div>
 
-                        <h3 className="text-lg font-bold text-slate-900 mb-4">Сводка поездки</h3>
+                        <h3 className="text-lg font-bold text-slate-900 mb-4">Trip Summary</h3>
 
                         <div className="space-y-4">
                             <div className="flex items-start gap-3">
@@ -122,8 +119,8 @@ export default async function TripDetailsPage({ params }: { params: Promise<{ id
                                     <MapPin className="w-5 h-5 text-slate-500" />
                                 </div>
                                 <div>
-                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Локация</div>
-                                    <div className="font-semibold text-slate-900">{trip.to_place || 'Не указана'}</div>
+                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Location</div>
+                                    <div className="font-semibold text-slate-900">{trip.to_place || 'Not specified'}</div>
                                 </div>
                             </div>
 
@@ -132,7 +129,7 @@ export default async function TripDetailsPage({ params }: { params: Promise<{ id
                                     <Calendar className="w-5 h-5 text-slate-500" />
                                 </div>
                                 <div>
-                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Даты</div>
+                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Dates</div>
                                     <div className="font-semibold text-slate-900">{trip.start_date || 'TBD'}</div>
                                 </div>
                             </div>
@@ -142,8 +139,8 @@ export default async function TripDetailsPage({ params }: { params: Promise<{ id
                                     <Banknote className="w-5 h-5 text-slate-500" />
                                 </div>
                                 <div>
-                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Цена</div>
-                                    <div className="font-semibold text-slate-900">{trip.price_amount ? `${trip.price_amount} ${trip.price_currency}` : 'Не указана'}</div>
+                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Price</div>
+                                    <div className="font-semibold text-slate-900">{trip.price_amount ? `${trip.price_amount} ${trip.price_currency}` : 'Not specified'}</div>
                                 </div>
                             </div>
 
@@ -152,16 +149,16 @@ export default async function TripDetailsPage({ params }: { params: Promise<{ id
                                     <UserCheck className="w-5 h-5 text-emerald-600" />
                                 </div>
                                 <div>
-                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Одобрено</div>
-                                    <div className="font-semibold text-slate-900">{approvedApps} / {trip.seats_total || '?'} мест</div>
+                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Approved</div>
+                                    <div className="font-semibold text-slate-900">{approvedApps} / {trip.seats_total || '?'} seats</div>
                                 </div>
                             </div>
                         </div>
 
                         <div className="mt-6 pt-6 border-t border-slate-50">
-                            <div className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Описание</div>
+                            <div className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Description</div>
                             <p className="text-sm text-slate-600 line-clamp-4 leading-relaxed">
-                                {trip.description_clean || 'Описания нет'}
+                                {trip.description_clean || 'No description'}
                             </p>
                         </div>
                     </div>
@@ -169,22 +166,5 @@ export default async function TripDetailsPage({ params }: { params: Promise<{ id
 
             </div>
         </PageContainer >
-    )
-}
-
-function StatCard({ label, value, subtext, icon, bg }: { label: string, value: string | number, subtext?: string, icon: React.ReactNode, bg: string }) {
-    return (
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-start justify-between">
-            <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">{label}</p>
-                <div className="flex items-baseline gap-2">
-                    <h3 className="text-2xl font-bold text-slate-900">{value}</h3>
-                    {subtext && <span className="text-xs text-slate-500">{subtext}</span>}
-                </div>
-            </div>
-            <div className={`p-2.5 rounded-lg ${bg}`}>
-                {icon}
-            </div>
-        </div>
     )
 }

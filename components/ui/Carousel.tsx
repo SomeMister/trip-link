@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import Image from 'next/image'
+import { getStorageUrl } from '@/lib/utils'
 
 interface CarouselProps {
     images: {
@@ -17,11 +17,6 @@ export function Carousel({ images, className = '' }: CarouselProps) {
 
     if (!images || images.length === 0) return null
 
-    const getUrl = (path: string) => {
-        if (path.startsWith('http')) return path
-        return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/trip-photos/${path}`
-    }
-
     const prevSlide = () => {
         setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))
     }
@@ -34,7 +29,7 @@ export function Carousel({ images, className = '' }: CarouselProps) {
         <div className={`relative w-full h-72 md:h-[450px] bg-slate-100 overflow-hidden group ${className}`}>
             <div className="w-full h-full relative">
                 <img
-                    src={getUrl(images[currentIndex].storage_path)}
+                    src={getStorageUrl(images[currentIndex].storage_path) || ''}
                     alt={`Slide ${currentIndex + 1}`}
                     className="w-full h-full object-cover transition-all duration-500"
                 />

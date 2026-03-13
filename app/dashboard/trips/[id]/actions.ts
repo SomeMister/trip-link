@@ -79,7 +79,7 @@ export async function closeTrip(tripId: string) {
     const supabase = await createClient()
 
     // Verify ownership
-    const { data: trip } = await supabase.from('trips').select('owner_id').eq('id', tripId).single()
+    const { data: trip } = await supabase.from('trips').select('owner_id, slug').eq('id', tripId).single()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!trip || !user || trip.owner_id !== user.id) {
@@ -94,8 +94,6 @@ export async function closeTrip(tripId: string) {
     if (error) return { error: 'Failed to close trip' }
 
     revalidatePath(`/dashboard/trips/${tripId}`)
-    revalidatePath(`/t/${tripId}`) // invalid path actually, slug is needed. 
-    // Ideally we revalidate everything or just the specific paths.
-    // Since we don't have slug easily here without fetching, good enough for dashboard.
+    revalidatePath(`/t/${trip.slug}`)
     return { success: true }
 }

@@ -19,10 +19,10 @@ export default async function DashboardPage() {
     const totalOpenSeats = trips?.reduce((acc, t) => acc + (t.seats_left || 0), 0) || 0
 
     const stats = [
-        { label: 'Всего поездок', value: totalTrips, icon: '🌍', color: 'bg-blue-50 text-blue-600' },
-        { label: 'Опубликовано', value: activeTrips, icon: '✅', color: 'bg-emerald-50 text-emerald-600' },
-        { label: 'Всего мест', value: totalCapacity, icon: '👥', color: 'bg-purple-50 text-purple-600' },
-        { label: 'Свободно', value: totalOpenSeats, icon: '🎟️', color: 'bg-amber-50 text-amber-600' },
+        { label: 'Total Trips', value: totalTrips, icon: '🌍', color: 'bg-blue-50 text-blue-600' },
+        { label: 'Published', value: activeTrips, icon: '✅', color: 'bg-emerald-50 text-emerald-600' },
+        { label: 'Total Seats', value: totalCapacity, icon: '👥', color: 'bg-purple-50 text-purple-600' },
+        { label: 'Available', value: totalOpenSeats, icon: '🎟️', color: 'bg-amber-50 text-amber-600' },
     ]
 
     return (
@@ -30,15 +30,15 @@ export default async function DashboardPage() {
             {/* Хедер дашборда */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight">Мой Дашборд</h1>
-                    <p className="text-slate-500 font-medium">Управляйте вашими приключениями и заявками</p>
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tight">My Dashboard</h1>
+                    <p className="text-slate-500 font-medium">Manage your trips and applications</p>
                 </div>
                 <Link
                     href="/dashboard/trips/new"
                     className="inline-flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-teal-600/20 active:scale-95"
                 >
                     <Plus className="h-5 w-5" />
-                    Создать поездку
+                    Create Trip
                 </Link>
             </div>
 
@@ -58,7 +58,7 @@ export default async function DashboardPage() {
             {/* Список поездок (Сетка) */}
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-slate-900">Ваши поездки</h2>
+                    <h2 className="text-xl font-bold text-slate-900">Your Trips</h2>
                 </div>
 
                 {trips && trips.length > 0 ? (
@@ -70,13 +70,13 @@ export default async function DashboardPage() {
                 ) : (
                     <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-200">
                         <div className="text-4xl mb-4">📭</div>
-                        <h3 className="text-lg font-bold text-slate-900">Поездок пока нет</h3>
-                        <p className="text-slate-500 mb-6">Создайте свою первую поездку, чтобы начать получать заявки</p>
+                        <h3 className="text-lg font-bold text-slate-900">No trips yet</h3>
+                        <p className="text-slate-500 mb-6">Create your first trip to start receiving applications</p>
                         <Link
                             href="/dashboard/trips/new"
                             className="text-teal-600 font-bold hover:underline"
                         >
-                            Создать сейчас &rarr;
+                            Create now &rarr;
                         </Link>
                     </div>
                 )}

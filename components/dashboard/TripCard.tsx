@@ -2,14 +2,16 @@
 
 import Link from 'next/link'
 import { MapPin, Calendar, Users } from 'lucide-react'
+import { TripWithRelations } from '@/lib/types'
+import { getStorageUrl } from '@/lib/utils'
 
 interface TripCardProps {
-    trip: any
+    trip: TripWithRelations
 }
 
 export function TripCard({ trip }: TripCardProps) {
     // Считаем новые заявки для бейджа
-    const newAppsCount = trip.applications?.filter((app: any) => app.status === 'new').length || 0
+    const newAppsCount = trip.applications?.filter((app) => app.status === 'new').length || 0
 
     // Расчет заполненности
     const totalSeats = trip.seats_total || 0
@@ -17,16 +19,9 @@ export function TripCard({ trip }: TripCardProps) {
     const occupiedSeats = totalSeats - seatsLeft
     const occupancyRate = totalSeats > 0 ? (occupiedSeats / totalSeats) * 100 : 0
 
-    // Функция для формирования URL (аналогично Carousel.tsx)
-    const getImageUrl = (path: string | null) => {
-        if (!path) return null;
-        if (path.startsWith('http')) return path;
-        return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/trip-photos/${path}`;
-    };
-
-    // Логика выбора обложки: сначала cover_image_url, если его нет — берем первое фото из trip_images
-    const firstImagePath = trip.trip_images?.sort((a: any, b: any) => a.position - b.position)[0]?.storage_path;
-    const finalImageUrl = getImageUrl(trip.cover_image_url || firstImagePath);
+    // Логика выбора обложки: сначала cover_image_url, потом первое фото из trip_images
+    const firstImagePath = trip.trip_images?.sort((a, b) => a.position - b.position)[0]?.storage_path;
+    const finalImageUrl = getStorageUrl(trip.cover_image_url ?? firstImagePath);
 
     return (
         <Link
@@ -43,7 +38,7 @@ export function TripCard({ trip }: TripCardProps) {
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs font-bold uppercase">
-                        Нет обложки
+                        No cover
                     </div>
                 )}
 
@@ -55,7 +50,7 @@ export function TripCard({ trip }: TripCardProps) {
                     </span>
                     {newAppsCount > 0 && (
                         <span className="bg-rose-500 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold animate-pulse shadow-sm">
-                            +{newAppsCount} НОВЫХ
+                            +{newAppsCount} NEW
                         </span>
                     )}
                 </div>
@@ -70,11 +65,11 @@ export function TripCard({ trip }: TripCardProps) {
                 <div className="space-y-2 mb-4 text-sm text-slate-500 font-medium">
                     <div className="flex items-center gap-2">
                         <MapPin className="h-3.5 w-3.5 text-slate-400" />
-                        <span className="line-clamp-1">{trip.to_place || 'Локация не указана'}</span>
+                        <span className="line-clamp-1">{trip.to_place || 'No location'}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                        <span>{trip.start_date || 'Дата TBD'}</span>
+                        <span>{trip.start_date || 'Date TBD'}</span>
                     </div>
                 </div>
 
@@ -83,7 +78,7 @@ export function TripCard({ trip }: TripCardProps) {
                     <div className="flex justify-between items-end mb-1.5">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
                             <Users className="h-3.5 w-3.5" />
-                            <span>{occupiedSeats} / {totalSeats} занято</span>
+                            <span>{occupiedSeats} / {totalSeats} taken</span>
                         </div>
                         <span className="text-[10px] font-bold text-slate-400">{Math.round(occupancyRate)}%</span>
                     </div>

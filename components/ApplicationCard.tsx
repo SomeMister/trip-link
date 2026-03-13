@@ -3,9 +3,10 @@
 import { useTransition } from 'react'
 import { updateApplicationStatus } from '@/app/dashboard/trips/[id]/actions'
 import { Check, X, Clock, Send, Instagram, Phone } from 'lucide-react'
+import { Application } from '@/lib/types'
 
 interface ApplicationCardProps {
-    application: any
+    application: Application
     tripId: string
 }
 
@@ -30,12 +31,12 @@ export function ApplicationCard({ application, tripId }: ApplicationCardProps) {
                         {application.contact_instagram && <Instagram className="w-3 h-3 text-pink-500" />}
                         {application.contact_phone && <Phone className="w-3 h-3 text-emerald-500" />}
                         <span className="text-xs font-medium text-slate-500">
-                            {application.contact_telegram || application.contact_instagram || application.contact_phone || 'Нет контакта'}
+                            {application.contact_telegram || application.contact_instagram || application.contact_phone || 'No contact'}
                         </span>
                     </div>
                 </div>
                 <div className="text-right">
-                    <span className="text-xs font-bold text-slate-400 uppercase">Места</span>
+                    <span className="text-xs font-bold text-slate-400 uppercase">Seats</span>
                     <div className="text-lg font-black text-slate-900">{application.seats_requested}</div>
                 </div>
             </div>

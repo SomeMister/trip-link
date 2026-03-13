@@ -35,6 +35,20 @@ export interface Application {
     created_at: string;
 }
 
+export interface TripImage {
+    id: string;
+    trip_id: string;
+    storage_path: string;
+    position: number;
+    created_at?: string;
+}
+
+/** Trip with joined applications and images (from Supabase select) */
+export interface TripWithRelations extends Trip {
+    applications?: Pick<Application, 'status'>[];
+    trip_images?: Pick<TripImage, 'storage_path' | 'position'>[];
+}
+
 export interface ParsedTripFields {
     title?: string;
     start_date?: string; // YYYY-MM-DD

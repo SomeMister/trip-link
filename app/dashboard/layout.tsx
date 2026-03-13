@@ -28,7 +28,7 @@ export default async function DashboardLayout({
                         <span>{user.email}</span>
                         <form action={signOut}>
                             <button type="submit" className="text-sm text-red-600 hover:text-red-500 transition-colors">
-                                Выйти
+                                Sign Out
                             </button>
                         </form>
                     </div>

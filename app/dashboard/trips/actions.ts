@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { generateSlug } from '@/lib/slug'
 import { redirect } from 'next/navigation'
 import { TripStatus } from '@/lib/types'
+import { splitDigestIntoTrips, extractTripDetails } from '@/lib/extractFromText'
 
 export type CreateTripState = {
     message?: string | null
@@ -137,4 +138,74 @@ export async function createTrip(prevState: CreateTripState, formData: FormData)
 
     // 7. Redirect
     redirect(`/dashboard/trips/${tripId}`)
+}
+
+export async function importDigestAction(rawText: string) {
+    const supabase = await createClient()
+
+    // 1. Auth Check
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+        throw new Error('Unauthorized')
+    }
+
+    // 2. Split into chunks
+    const chunks = splitDigestIntoTrips(rawText)
+    if (chunks.length === 0) {
+        throw new Error('No trips detected in text')
+    }
+
+    let successCount = 0
+
+    // 3. Process each chunk
+    for (const chunk of chunks) {
+        const { fields } = extractTripDetails(chunk)
+        const title = fields.title || 'Imported Trip'
+
+        // Generate unique slug
+        let slug = generateSlug(title)
+        let unique = false
+        let attempts = 0
+        while (!unique && attempts < 3) {
+            const { data } = await supabase.from('trips').select('id').ilike('slug', slug).single()
+            if (!data) {
+                unique = true
+            } else {
+                slug = generateSlug(title)
+                attempts++
+            }
+        }
+
+        // Insert
+        const { error } = await supabase.from('trips').insert({
+            owner_id: user.id,
+            slug,
+            title,
+            description_raw: chunk,
+            description_clean: fields.description_clean || chunk,
+            start_date: fields.start_date || null,
+            end_date: fields.end_date || null,
+            from_city: fields.from_city || null,
+            to_place: fields.to_place || null,
+            price_amount: fields.price_amount ? Number(fields.price_amount) : null,
+            price_currency: fields.price_currency || 'PLN',
+            price_text: fields.price_text || null,
+            seats_total: fields.seats_total ? Number(fields.seats_total) : null,
+            seats_left: fields.seats_total ? Number(fields.seats_total) : null,
+            status: 'draft',
+        })
+
+        if (!error) {
+            successCount++
+        } else {
+            console.error('Failed to insert digested trip:', error)
+        }
+    }
+
+    if (successCount === 0) {
+        throw new Error('Failed to import any trips')
+    }
+
+    // Redirect to dashboard with success query param
+    redirect(`/dashboard?success=imported_digest&count=${successCount}`)
 }

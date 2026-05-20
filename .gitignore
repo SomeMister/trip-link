@@ -48,3 +48,5 @@ supabase/.cache/
 # IDE
 .idea/
 .vscode/
+.opencode/oh-my-opencode.json
+.opencode/opencode.json

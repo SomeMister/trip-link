@@ -29,15 +29,18 @@ export function TripCard({ trip }: TripCardProps) {
             className="group bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:border-teal-100 transition-all duration-300 overflow-hidden flex flex-col"
         >
             {/* Фото поездки */}
-            <div className="relative h-40 w-full bg-slate-100">
+            <div className="relative h-40 w-full bg-slate-100 overflow-hidden">
                 {finalImageUrl ? (
-                    <img
-                        src={finalImageUrl}
-                        alt={trip.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
+                    <>
+                        <img
+                            src={finalImageUrl}
+                            alt={trip.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/20 pointer-events-none transition-opacity duration-300 group-hover:opacity-90" />
+                    </>
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs font-bold uppercase">
+                    <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs font-bold uppercase animate-shimmer">
                         No cover
                     </div>
                 )}

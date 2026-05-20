@@ -1,10 +1,20 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { Plus } from 'lucide-react'
+import { Plus, Sparkles, X } from 'lucide-react'
 import { TripCard } from '@/components/dashboard/TripCard'
 
-export default async function DashboardPage() {
+interface PageProps {
+    searchParams: Promise<{
+        success?: string
+        count?: string
+    }>
+}
+
+export default async function DashboardPage({ searchParams }: PageProps) {
     const supabase = await createClient()
+    const resolvedParams = await searchParams
+    const isDigestSuccess = resolvedParams.success === 'imported_digest'
+    const importedCount = resolvedParams.count ? parseInt(resolvedParams.count, 10) : 0
 
     // Получаем поездки вместе со статусами заявок для бейджей
     const { data: trips } = await supabase
@@ -27,6 +37,38 @@ export default async function DashboardPage() {
 
     return (
         <div className="space-y-10 pb-12">
+            {/* Digest Success Alert */}
+            {isDigestSuccess && (
+                <div className="relative overflow-hidden bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-emerald-500/5 backdrop-blur-md rounded-3xl border border-emerald-500/20 p-6 shadow-xl shadow-emerald-500/5 animate-in fade-in slide-in-from-top-4 duration-500 hover:scale-[1.01] transition-transform">
+                    {/* Glowing ambient blobs in background */}
+                    <div className="absolute -right-10 -top-10 w-36 h-36 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none"></div>
+                    <div className="absolute -left-10 -bottom-10 w-36 h-36 bg-teal-400/20 rounded-full blur-3xl pointer-events-none"></div>
+                    
+                    <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-start gap-4">
+                            <div className="bg-emerald-500/20 p-3 rounded-2xl text-emerald-600 flex items-center justify-center shadow-inner">
+                                <Sparkles className="h-6 w-6 animate-pulse" />
+                            </div>
+                            <div className="space-y-1">
+                                <h3 className="text-lg font-black text-emerald-950 tracking-tight">🪄 Digest Mode Import Successful!</h3>
+                                <p className="text-emerald-700 font-medium text-sm">
+                                    We analyzed your post, split it, and automatically imported <span className="font-extrabold text-emerald-900 underline decoration-2 underline-offset-2">{importedCount} trips</span> as drafts to your dashboard.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3 self-end sm:self-center">
+                            <Link
+                                href="/dashboard"
+                                className="inline-flex items-center justify-center p-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-800 hover:text-emerald-950 transition-all active:scale-95 border border-emerald-500/10 hover:border-emerald-500/20"
+                                title="Dismiss notification"
+                            >
+                                <X className="h-5 w-5" />
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Хедер дашборда */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>

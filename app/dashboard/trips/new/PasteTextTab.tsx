@@ -6,9 +6,11 @@ interface PasteTextTabProps {
     rawText: string
     onRawTextChange: (text: string) => void
     onParse: () => void
+    buttonText?: string
+    loading?: boolean
 }
 
-export function PasteTextTab({ rawText, onRawTextChange, onParse }: PasteTextTabProps) {
+export function PasteTextTab({ rawText, onRawTextChange, onParse, buttonText = 'Auto-Fill Trip', loading = false }: PasteTextTabProps) {
     return (
         <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
             <textarea
@@ -20,11 +22,15 @@ export function PasteTextTab({ rawText, onRawTextChange, onParse }: PasteTextTab
             <button
                 type="button"
                 onClick={onParse}
-                disabled={!rawText.trim()}
+                disabled={loading || !rawText.trim()}
                 className="w-full py-4 bg-teal-600 text-white rounded-2xl hover:bg-teal-700 text-lg font-bold shadow-lg shadow-teal-600/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group"
             >
-                <Wand2 className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                Auto-Fill Trip
+                {loading ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                    <Wand2 className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                )}
+                {buttonText}
             </button>
         </div>
     )

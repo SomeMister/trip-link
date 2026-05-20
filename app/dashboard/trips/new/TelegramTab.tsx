@@ -8,9 +8,10 @@ interface TelegramTabProps {
     onImport: () => void
     loading: boolean
     error: string | null
+    buttonText?: string
 }
 
-export function TelegramTab({ telegramUrl, onUrlChange, onImport, loading, error }: TelegramTabProps) {
+export function TelegramTab({ telegramUrl, onUrlChange, onImport, loading, error, buttonText = 'Auto-Fill from Link' }: TelegramTabProps) {
     return (
         <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
             <div className="space-y-2">
@@ -39,7 +40,7 @@ export function TelegramTab({ telegramUrl, onUrlChange, onImport, loading, error
                 ) : (
                     <Import className="w-5 h-5" />
                 )}
-                {loading ? 'Importing...' : 'Auto-Fill from Link'}
+                {buttonText}
             </button>
         </div>
     )

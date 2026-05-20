@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { extractTripDetails } from './extractFromText'
+import { extractTripDetails, splitDigestIntoTrips } from './extractFromText'
 
 /**
  * Helper: since resolveYear picks current year or next year depending
@@ -209,7 +209,7 @@ describe('extractFromText', () => {
     })
 
     it('should generate "New Trip" when no location found', () => {
-        const result = extractTripDetails('Fun weekend 15.02 200 pln')
+        const result = extractTripDetails('15.02 200 pln')
         // No from/to extracted:
         if (!result.fields.from_city && !result.fields.to_place) {
             expect(result.fields.title).toBe('New Trip')
@@ -286,5 +286,67 @@ describe('extractFromText', () => {
         const text = 'Original trip description text'
         const result = extractTripDetails(text)
         expect(result.fields.description_clean).toBe(text)
+    })
+
+    // ===== DIGEST SPLITTING =====
+
+    it('should split digest into trips using ➖ divider', () => {
+        const digestText = `
+Анонс поездок на июнь!
+➖ ➖ ➖
+⛵ Поход на парусниках ⛵
+Термин: 5–7 ИЮНЯ (3 дня)
+Стоимость: 1290 zł
+➖ ➖ ➖
+⛺ Каякинг на Мазурах ⛺
+Термин: 14 ИЮНЯ (1 день)
+Стоимость: 290 zł
+➖ ➖ ➖
+🏕️ Кемпинг на озерах 🏕️
+15.02 200 pln
+`
+        const chunks = splitDigestIntoTrips(digestText)
+        expect(chunks.length).toBe(3)
+        expect(chunks[0]).toContain('Поход на парусниках')
+        expect(chunks[1]).toContain('Каякинг на Мазурах')
+        expect(chunks[2]).toContain('Кемпинг на озерах')
+    })
+
+    it('should return empty array for empty digest', () => {
+        expect(splitDigestIntoTrips('')).toEqual([])
+        expect(splitDigestIntoTrips('   ')).toEqual([])
+    })
+
+    it('should fall back to original text if no dividers found but has dates/prices', () => {
+        const text = 'Trip to Zakopane on 15.02 for 150pln'
+        expect(splitDigestIntoTrips(text)).toEqual([text])
+    })
+
+    // ===== SMART TITLE EXTRACTION =====
+
+    it('should extract clean smart titles', () => {
+        const cases = [
+            {
+                input: '⛵ ПОХОД НА ПАРУСНИКАХ ⛵\nТермин: 5–7 ИЮНЯ\n1290 zł',
+                expected: 'ПОХОД НА ПАРУСНИКАХ'
+            },
+            {
+                input: '🔥🛶⛺ КАЯКИНГ НА МАЗУРАХ (1 день, Польша)\n14 ИЮНЯ 290 zł',
+                expected: 'КАЯКИНГ НА МАЗУРАХ'
+            },
+            {
+                input: '🏕️ КЕМПИНГ НА ОЗЕРАХ 🏕️ (3 дня)\n15.02 200 pln',
+                expected: 'КЕМПИНГ НА ОЗЕРАХ'
+            },
+            {
+                input: '«ТОТ САМЫЙ БУБР» 🦫\n15.02 200 pln',
+                expected: 'ТОТ САМЫЙ БУБР'
+            }
+        ]
+
+        for (const { input, expected } of cases) {
+            const result = extractTripDetails(input)
+            expect(result.fields.title).toBe(expected)
+        }
     })
 })

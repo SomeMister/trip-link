@@ -1,7 +1,7 @@
 'use client'
 
 import { useActionState, useState } from 'react'
-import { createTrip, CreateTripState } from '../actions'
+import { createTrip, CreateTripState, importDigestAction } from '../actions'
 import { extractTripDetails } from '@/lib/extractFromText'
 import { ParsedTripFields } from '@/lib/types'
 import { PageContainer } from '@/components/ui/PageContainer'
@@ -17,6 +17,11 @@ export default function NewTripPage() {
     const [state, formAction, isPending] = useActionState(createTrip, initialState)
     const [activeTab, setActiveTab] = useState<'paste' | 'telegram' | 'manual'>('paste')
 
+    // Mode Toggle
+    const [importMode, setImportMode] = useState<'single' | 'digest'>('single')
+    const [digestError, setDigestError] = useState<string | null>(null)
+    const [isImportingDigest, setIsImportingDigest] = useState(false)
+
     // Inputs
     const [rawText, setRawText] = useState('')
     const [telegramUrl, setTelegramUrl] = useState('')
@@ -25,10 +30,35 @@ export default function NewTripPage() {
 
     const [fields, setFields] = useState<ParsedTripFields>({})
 
+    // Mode change handler
+    const handleModeChange = (mode: 'single' | 'digest') => {
+        setImportMode(mode)
+        if (mode === 'digest' && activeTab === 'manual') {
+            setActiveTab('paste')
+        }
+    }
+
+    // Digest batch import handler
+    const handleDigestImport = async (textToImport: string) => {
+        setIsImportingDigest(true)
+        setDigestError(null)
+        try {
+            await importDigestAction(textToImport)
+        } catch (err: any) {
+            setDigestError(err.message || 'Failed to import digest')
+        } finally {
+            setIsImportingDigest(false)
+        }
+    }
+
     // Handler for Paste Text
-    const handlePasteParse = () => {
-        const { fields: extracted } = extractTripDetails(rawText)
-        setFields(prev => ({ ...prev, ...extracted }))
+    const handlePasteParse = async () => {
+        if (importMode === 'digest') {
+            await handleDigestImport(rawText)
+        } else {
+            const { fields: extracted } = extractTripDetails(rawText)
+            setFields(prev => ({ ...prev, ...extracted }))
+        }
     }
 
     // Handler for Telegram Import
@@ -47,8 +77,12 @@ export default function NewTripPage() {
                 setImportError(data.error || 'Import failed')
             } else {
                 setRawText(data.text);
-                const { fields: extracted } = extractTripDetails(data.text)
-                setFields(prev => ({ ...prev, ...extracted }))
+                if (importMode === 'digest') {
+                    await handleDigestImport(data.text)
+                } else {
+                    const { fields: extracted } = extractTripDetails(data.text)
+                    setFields(prev => ({ ...prev, ...extracted }))
+                }
             }
         } catch {
             setImportError('Import failed due to network error')
@@ -66,11 +100,16 @@ export default function NewTripPage() {
         }))
     }
 
-    const tabs = [
-        { key: 'paste' as const, icon: <Type size={16} />, label: 'Paste Text' },
-        { key: 'telegram' as const, icon: <LinkIcon size={16} />, label: 'Telegram Link' },
-        { key: 'manual' as const, icon: <Edit3 size={16} />, label: 'Manual' },
-    ]
+    const tabs = importMode === 'single'
+        ? [
+            { key: 'paste' as const, icon: <Type size={16} />, label: 'Paste Text' },
+            { key: 'telegram' as const, icon: <LinkIcon size={16} />, label: 'Telegram Link' },
+            { key: 'manual' as const, icon: <Edit3 size={16} />, label: 'Manual' },
+          ]
+        : [
+            { key: 'paste' as const, icon: <Type size={16} />, label: 'Paste Text' },
+            { key: 'telegram' as const, icon: <LinkIcon size={16} />, label: 'Telegram Link' },
+          ]
 
     return (
         <PageContainer>
@@ -78,13 +117,33 @@ export default function NewTripPage() {
                 <input type="hidden" name="description_raw" value={rawText} />
 
                 {/* Header */}
-                <div className="text-center space-y-2">
+                <div className="text-center space-y-4">
                     <h1 className="text-3xl font-black text-slate-900 tracking-tight">Create New Trip</h1>
                     <p className="text-slate-500 font-medium text-lg">Paste your trip details and let AI handle the rest</p>
+                    
+                    {/* Premium Mode Toggle */}
+                    <div className="flex justify-center pt-2">
+                        <div className="inline-flex p-1 bg-slate-100/85 backdrop-blur rounded-2xl border border-slate-200/50 shadow-inner">
+                            <button
+                                type="button"
+                                onClick={() => handleModeChange('single')}
+                                className={`px-6 py-2.5 rounded-xl text-sm font-black transition-all duration-300 ${importMode === 'single' ? 'bg-white text-slate-900 shadow-md shadow-slate-200/40 scale-100' : 'text-slate-500 hover:text-slate-800 active:scale-95'}`}
+                            >
+                                Single Trip
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleModeChange('digest')}
+                                className={`px-6 py-2.5 rounded-xl text-sm font-black transition-all duration-300 ${importMode === 'digest' ? 'bg-white text-slate-900 shadow-md shadow-slate-200/40 scale-100' : 'text-slate-500 hover:text-slate-800 active:scale-95'}`}
+                            >
+                                Digest Mode (Multi-Trip)
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Hero Section: Grid 2 Cols */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+                {/* Hero Grid */}
+                <div className={`grid grid-cols-1 ${importMode === 'single' ? 'lg:grid-cols-2' : 'max-w-3xl mx-auto'} gap-8 items-stretch`}>
 
                     {/* Left Col: Input Card */}
                     <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-2 flex flex-col">
@@ -110,6 +169,8 @@ export default function NewTripPage() {
                                     rawText={rawText}
                                     onRawTextChange={setRawText}
                                     onParse={handlePasteParse}
+                                    buttonText={importMode === 'digest' ? (isImportingDigest ? 'Importing Digest...' : 'Batch Import Digest') : 'Auto-Fill Trip'}
+                                    loading={isImportingDigest}
                                 />
                             )}
 
@@ -118,8 +179,9 @@ export default function NewTripPage() {
                                     telegramUrl={telegramUrl}
                                     onUrlChange={setTelegramUrl}
                                     onImport={handleTelegramImport}
-                                    loading={loadingImport}
-                                    error={importError}
+                                    loading={loadingImport || isImportingDigest}
+                                    error={importError || digestError}
+                                    buttonText={importMode === 'digest' ? (isImportingDigest || loadingImport ? (isImportingDigest ? 'Importing Digest...' : 'Fetching Link...') : 'Batch Import from Link') : 'Auto-Fill from Link'}
                                 />
                             )}
 
@@ -138,52 +200,56 @@ export default function NewTripPage() {
                     </div>
 
                     {/* Right Col: Media Card */}
-                    <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 flex flex-col h-full min-h-[400px]">
-                        <ImageUpload name="photos" maxFiles={5} className="h-full flex flex-col" />
-                    </div>
+                    {importMode === 'single' && (
+                        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 flex flex-col h-full min-h-[400px]">
+                            <ImageUpload name="photos" maxFiles={5} className="h-full flex flex-col" />
+                        </div>
+                    )}
 
                 </div>
 
                 {/* Secondary Section: Details */}
-                <div className="space-y-6 pt-8 border-t border-slate-100">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="h-px bg-slate-200 flex-1"></div>
-                        <h2 className="text-slate-400 font-bold uppercase tracking-wider text-sm">Trip Details</h2>
-                        <div className="h-px bg-slate-200 flex-1"></div>
-                    </div>
-
-                    <TripDetailsForm fields={fields} onChange={handleChange} errors={state.errors} />
-
-                    {/* Error Message */}
-                    {state.message && (
-                        <div className="p-4 bg-rose-50 text-rose-700 rounded-2xl text-sm font-bold border border-rose-100">
-                            {state.message}
+                {importMode === 'single' && (
+                    <div className="space-y-6 pt-8 border-t border-slate-100">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="h-px bg-slate-200 flex-1"></div>
+                            <h2 className="text-slate-400 font-bold uppercase tracking-wider text-sm">Trip Details</h2>
+                            <div className="h-px bg-slate-200 flex-1"></div>
                         </div>
-                    )}
 
-                    {/* Actions */}
-                    <div className="flex items-center justify-end gap-4 pt-4 pb-12">
-                        <button
-                            type="submit"
-                            name="status"
-                            value="draft"
-                            disabled={isPending}
-                            className="px-8 py-3 rounded-xl bg-white text-slate-600 font-bold text-sm ring-1 ring-slate-200 hover:bg-slate-50 transition-all active:scale-95"
-                        >
-                            Save Draft
-                        </button>
-                        <button
-                            type="submit"
-                            name="status"
-                            value="published"
-                            disabled={isPending}
-                            className="px-8 py-3 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 shadow-xl shadow-slate-900/20 transition-all active:scale-95 flex items-center gap-2"
-                        >
-                            {isPending ? 'Publishing...' : 'Publish Trip'}
-                        </button>
+                        <TripDetailsForm fields={fields} onChange={handleChange} errors={state.errors} />
+
+                        {/* Error Message */}
+                        {state.message && (
+                            <div className="p-4 bg-rose-50 text-rose-700 rounded-2xl text-sm font-bold border border-rose-100">
+                                {state.message}
+                            </div>
+                        )}
+
+                        {/* Actions */}
+                        <div className="flex items-center justify-end gap-4 pt-4 pb-12">
+                            <button
+                                type="submit"
+                                name="status"
+                                value="draft"
+                                disabled={isPending}
+                                className="px-8 py-3 rounded-xl bg-white text-slate-600 font-bold text-sm ring-1 ring-slate-200 hover:bg-slate-50 transition-all active:scale-95"
+                            >
+                                Save Draft
+                            </button>
+                            <button
+                                type="submit"
+                                name="status"
+                                value="published"
+                                disabled={isPending}
+                                className="px-8 py-3 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 shadow-xl shadow-slate-900/20 transition-all active:scale-95 flex items-center gap-2"
+                            >
+                                {isPending ? 'Publishing...' : 'Publish Trip'}
+                            </button>
+                        </div>
+
                     </div>
-
-                </div>
+                )}
             </form>
         </PageContainer>
     )

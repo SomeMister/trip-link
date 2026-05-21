@@ -213,7 +213,38 @@ export function extractTripDetails(text: string): ParseResult {
     }
 
     // Title generation
-    if (fields.to_place || fields.from_city) {
+    let titleCandidate = '';
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    if (lines.length > 0) {
+        let firstLine = lines[0];
+        // Strip emojis
+        firstLine = firstLine.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2700}-\u{27BF}]|[\u{2600}-\u{26FF}]/gu, '');
+        // Strip specific trip emojis/symbols commonly used
+        firstLine = firstLine.replace(/[🔥🛶🏕🧗🎒🏔🧭🦌🎪🌾🌿🌾🍂🍃🍁🌸🌼🌻🌻🌿🛶⛵⛺🚙🚐🚌🏕🧗🧗‍♂️🧗‍♀️🧗⛰️🏔️🏞️🌊🌟⭐✨🎈🔔📞📱📲🔗👇➖▬«»"“„]/g, '');
+        // Strip duration formats like "(3 дня, Польша)" or "(2 days)" or "(1 день)"
+        firstLine = firstLine.replace(/\(\s*\d+\s*(?:день|дня|днях|дней|days?|dzień|dnia|dni|d)\s*,?\s*[^)]*\)/gi, '');
+        firstLine = firstLine.replace(/\(\s*[^)]*\b\d+\s*(?:день|дня|днях|дней|days?|dzień|dnia|dni|d)\b[^)]*\)/gi, '');
+        // Strip date patterns like "5–7 ИЮНЯ" or "14 ИЮНЯ" or "20 и 21 ИЮНЯ"
+        const monthPattern = Object.keys(MONTH_MAP).sort((a, b) => b.length - a.length).join('|');
+        const dateStripRegex = new RegExp(`\\b\\d{1,2}(?:\\s*[-–и&+,./]\\s*\\d{1,2})?\\s*(?:of\\s+)?(?:${monthPattern})\\b|\\b\\d{1,2}[./]\\d{1,2}\\b`, 'gi');
+        firstLine = firstLine.replace(dateStripRegex, '');
+        // Strip prices like "1290 zł" or "290 zł"
+        firstLine = firstLine.replace(/\b\d{2,5}\s*(?:zl|zł|pln|eur|euro|\$)\b|\b(?:\$|€)\s*\d{2,5}\b/gi, '');
+        // Strip other price indications
+        firstLine = firstLine.replace(/\b\d+\s*(?:zł|złotych|pln|eur|usd)\b/gi, '');
+        // Strip leading/trailing punctuation and spaces
+        firstLine = firstLine.replace(/^[\s\-_–—:.,()\[\]{}]+|[\s\-_–—:.,()\[\]{}]+$/g, '').trim();
+        // Collapse multiple spaces
+        firstLine = firstLine.replace(/\s+/g, ' ').trim();
+
+        if (firstLine.length > 3 && firstLine.length < 80) {
+            titleCandidate = firstLine;
+        }
+    }
+
+    if (titleCandidate) {
+        fields.title = titleCandidate;
+    } else if (fields.to_place || fields.from_city) {
         fields.title = `Trip ${fields.from_city ? 'from ' + fields.from_city : ''} ${fields.to_place ? 'to ' + fields.to_place : ''}`;
     } else {
         fields.title = 'New Trip';
@@ -226,3 +257,53 @@ export function extractTripDetails(text: string): ParseResult {
 
     return { fields, confidence: Math.min(confidence, 1.0), warnings };
 }
+
+/**
+ * Splits a monthly schedule/digest post containing multiple trips
+ * into individual text blocks, one per trip.
+ */
+export function splitDigestIntoTrips(text: string): string[] {
+    if (!text || text.trim().length === 0) return [];
+
+    // Split by common dividers: 3+ characters of dashes, equals, underscores, heavy dashes (➖/▬) with optional spaces in between
+    const rawChunks = text.split(/(?:[➖▬─━_~=*#-]\s*){3,}/gu);
+
+    const tripChunks: string[] = [];
+
+    // Monthly name regex to check if a block has a date
+    const monthPattern = Object.keys(MONTH_MAP)
+        .sort((a, b) => b.length - a.length)
+        .join('|');
+    const hasDateRegex = new RegExp(
+        `(?<!\\w)\\d{1,2}(?:\\s*[-–и&+,./]\\s*\\d{1,2})?\\s*(?:of\\s+)?(?:${monthPattern})(?!\\w)|(?<!\\w)\\d{1,2}[./]\\d{1,2}(?!\\w)`,
+        'i'
+    );
+
+    // Price regex to check if a block has a price
+    const hasPriceRegex = /(?<!\w)\d{2,5}\s*(?:zl|zł|pln|eur|euro|\$)(?!\w)|(?<!\w)(?:\$|€)\s*\d{2,5}(?!\w)/i;
+
+    for (const chunk of rawChunks) {
+        const trimmed = chunk.trim();
+        if (trimmed.length < 15) continue; // too short to be a trip block
+
+        // To qualify as a trip, it must contain either a date or a price
+        const hasDate = hasDateRegex.test(trimmed);
+        const hasPrice = hasPriceRegex.test(trimmed) || 
+                         trimmed.toLowerCase().includes('zrzutka') || 
+                         trimmed.toLowerCase().includes('delim') || 
+                         trimmed.toLowerCase().includes('split');
+
+        if (hasDate || hasPrice) {
+            tripChunks.push(trimmed);
+        }
+    }
+
+    // If no chunks were found using dividers, but the text is long and has multiple dates/prices,
+    // we can return the whole text as a single chunk to avoid losing data.
+    if (tripChunks.length === 0) {
+        return [text.trim()];
+    }
+
+    return tripChunks;
+}
+
